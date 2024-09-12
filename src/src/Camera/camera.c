@@ -21,7 +21,7 @@ struct Camera {
 };
 typedef struct Camera Camera;
 
-void* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_sensitivity)
+Camera* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_sensitivity)
 {
     Camera* cam=(Camera*)malloc(sizeof(Camera));
     if (cam == NULL)
@@ -42,12 +42,12 @@ void* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_sens
     return cam;
 }
 
-void camera_destroy(void* cum)
+void camera_destroy(struct Camera* cum)
 {
     free(cum);
 }
 
-void camera_setProjection(void* cum, float fov, float aspectXY, float near_plane, float far_plane)
+void camera_setProjection(struct Camera* cum, float fov, float aspectXY, float near_plane, float far_plane)
 {
     Camera* cam = (Camera*)cum;
     cam->fov = fov;
@@ -58,16 +58,21 @@ void camera_setProjection(void* cum, float fov, float aspectXY, float near_plane
 }
 
 
-Mat4 camera_getViewMatrix(void* cum)
+Mat4 camera_getViewMatrix(struct Camera* cum)
 {
     return ((Camera*)cum)->view_matrix;
+}
+
+Mat4 camera_getProjectionMatrix(struct Camera* cum)
+{
+    return cum->projection_matrix;
 }
 
 
 #pragma warning( push )
 #pragma warning( disable : 4789 )
 
-void camera_updateVectors(void* cum)
+void camera_updateVectors(struct Camera* cum)
 {
     Camera* cam = (Camera*)cum;
     Vec3 front;
