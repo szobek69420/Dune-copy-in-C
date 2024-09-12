@@ -13,7 +13,6 @@ typedef struct ShaderInfo ShaderInfo;
 static seqtor_of(ShaderInfo) registeredShaders;
 static unsigned int currentShaderId = 0;
 
-static int isEboUsed = 1;
 static GLenum drawMode = GL_TRIANGLES;
 
 static Camera* camera=NULL;
@@ -23,6 +22,8 @@ void renderer_init()
 {
 	seqtor_init(registeredShaders, 1);
 	renderer_createShader("Shaders/default.vag", "Shaders/default.fag", NULL);
+
+	textureHandler_init();
 }
 
 void renderer_deinit()
@@ -30,6 +31,8 @@ void renderer_deinit()
 	for (int i = 0; i < seqtor_size(registeredShaders); i++)
 		shader_delete(seqtor_at(registeredShaders, i).glId);
 	seqtor_destroy(registeredShaders);
+
+	textureHandler_deinit();
 }
 
 shader_id renderer_createShader(const char* vs, const char* fs, const char* gs)//gives back the id with which the shader can be accessed
@@ -68,19 +71,18 @@ void renderer_useShader(shader_id shader)
 	}
 }
 
-void renderer_setRenderConfig(int eboUsed, GLenum renderMode)
+void renderer_setRenderMode(GLenum renderMode)
 {
-	isEboUsed = eboUsed;
 	drawMode = renderMode;
 }
 
 void renderer_renderObject(struct Renderable renderable, struct Mat4 model)
 {
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, ide vmi);
+	glBindTexture(GL_TEXTURE_2D, renderable.texture);
 
 	glBindVertexArray(renderable.vao);
-	if (isEboUsed == 0)
+	if (renderable.eboUsed == 0)
 		glDrawArrays(drawMode, 0, renderable.count);
 	else
 		glDrawElements(drawMode, renderable.count, GL_UNSIGNED_INT, NULL);
@@ -91,4 +93,69 @@ void renderer_renderObject(struct Renderable renderable, struct Mat4 model)
 void renderer_setCamera(struct Camera* cum)
 {
 	camera = cum;
+}
+
+Renderable renderer_createRenderable(const float* vData, unsigned int vCount, const unsigned int* iData, unsigned int iCount)
+{
+	Renderable r;
+
+	glGenVertexArrays(1, &r.vao);
+	glBindVertexArray(r.vao);
+	
+	glGenBuffers(1, &r.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vCount, vData, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	if (iData == NULL)//no ebo is used
+	{
+		r.eboUsed = 0;
+		r.ebo = 0;
+		r.count = vCount;
+	}
+	else
+	{
+		glGenBuffers(1, &r.ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * iCount, iData, GL_STATIC_DRAW);
+
+		r.eboUsed = 1;
+		r.count = iCount;
+	}
+
+	glBindVertexArray(0);
+	return r;
+}
+
+void renderer_destroyRenderable(Renderable renderable)
+{
+	glDeleteVertexArrays(1, &renderable.vao);
+	glDeleteBuffers(1, &renderable.vbo);
+	if (renderable.eboUsed)
+		glDeleteBuffers(1, &renderable.ebo);
+}
+
+
+texture_t renderer_createTexture(const char* imagePath, int channels)
+{
+	GLenum format;
+	switch (channels)
+	{
+	case 3:
+		format = GL_RGB;
+		break;
+	default:
+		format = GL_RGBA;
+		break;
+	}
+
+	return textureHandler_loadImage(imagePath, GL_RGBA, GL_RGBA, GL_LINEAR, 69);
+}
+
+void renderer_setTexture(Renderable* renderable, texture_t texture)
+{
+	renderable->texture = texture;
 }
