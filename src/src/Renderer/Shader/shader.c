@@ -9,7 +9,7 @@
 
 shader_t shader_import(const char* pathToVertexShader, const char* pathToFragmentShader, const char* pathToGeometryShader)
 {
-    shader_t program;
+    shader_t program=0;
 
     int  success;
     char infoLog[512];

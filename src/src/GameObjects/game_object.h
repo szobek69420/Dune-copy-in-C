@@ -1,8 +1,12 @@
 #ifndef GAME_OBJECT_H
 #define GAME_OBJECT_H
 
+#include <seqtor.h>
+#include <stdint.h>
+
 #include "../Glm2/vec3.h"
 #include "../Glm2/quaternion.h"
+#include "../Glm2/mat4.h"
 
 /*every gameobject's first field is a Transform called "transform"
 * and the struct definition should be in the .c file
@@ -15,6 +19,7 @@ struct Transform {
 	struct Vec3 position;
 	struct Quaternion rotation;
 	struct Vec3 scale;
+	int isInitialized;
 };
 typedef struct Transform Transform;
 
@@ -22,18 +27,28 @@ enum GameObjects{
 	TRACK_HANDLER,
 	PLAYER
 };
+typedef enum GameObjects GameObjects;
 
 int gameObject_getNextId();
 
 void gameObject_update(float deltaTime);
+void gameObject_onStart(void* gameObject);
+void gameObject_onDestroy(void* gameObject);
+
 void gameObject_render(void* pwindow);
 
 void gameObject_init();
-void gameObject_end();
+void gameObject_deinit();
+
+void* gameObject_create(GameObjects type);
 
 //if parent is NULL, then it goes under the root component
 void gameObject_add(void* gameObject, void* parent);
 //destroys children as well
 void gameObject_destroy(void* gameObject);
+
+Transform gameObject_createTransform(GameObjects type);
+void gameObject_destroyTransform(Transform* transform);
+Mat4 gameObject_getTransformModel(const Transform* transform);
 
 #endif

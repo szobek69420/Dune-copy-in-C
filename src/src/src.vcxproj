@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="Camera\camera.c" />
     <ClCompile Include="GameObjects\game_object.c" />
+    <ClCompile Include="GameObjects\Player\player.c" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Glm2\mat3.c" />
     <ClCompile Include="Glm2\mat4.c" />
@@ -141,15 +142,27 @@
     <ClCompile Include="Glm2\vec3.c" />
     <ClCompile Include="Glm2\vec4.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="Renderer\renderer.c" />
+    <ClCompile Include="Renderer\Shader\shader.c" />
+    <ClCompile Include="Renderer\Texture\stb_image.c" />
+    <ClCompile Include="Renderer\Texture\texture_handler.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\camera.h" />
     <ClInclude Include="GameObjects\game_object.h" />
+    <ClInclude Include="GameObjects\Player\player.h" />
     <ClInclude Include="Glm2\mat3.h" />
     <ClInclude Include="Glm2\mat4.h" />
     <ClInclude Include="Glm2\quaternion.h" />
     <ClInclude Include="Glm2\vec3.h" />
     <ClInclude Include="Glm2\vec4.h" />
+    <ClInclude Include="Renderer\renderer.h" />
+    <ClInclude Include="Renderer\Shader\shader.h" />
+    <ClInclude Include="Renderer\Texture\texture_handler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\default.fag" />
+    <None Include="Shaders\default.vag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

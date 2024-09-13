@@ -5,8 +5,8 @@
 
 #include <glad/glad.h>
 
-#include "../Glm2/vec3.h"
-#include "../Glm2/mat4.h"
+#include "../../Glm2/vec3.h"
+#include "../../Glm2/mat4.h"
 
 typedef GLuint shader_t;
 

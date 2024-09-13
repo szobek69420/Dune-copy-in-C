@@ -17,11 +17,12 @@ static GLenum drawMode = GL_TRIANGLES;
 
 static Camera* camera=NULL;
 
+static shader_t currentShader = 0;
 
 void renderer_init()
 {
 	seqtor_init(registeredShaders, 1);
-	renderer_createShader("Shaders/default.vag", "Shaders/default.fag", NULL);
+	renderer_createShader("Assets/Shaders/default.vag", "Assets/Shaders/default.fag", NULL);
 
 	textureHandler_init();
 }
@@ -69,6 +70,8 @@ void renderer_useShader(shader_id shader)
 		glUniformMatrix4fv(glGetUniformLocation(info->glId, "view"), 1, GL_FALSE, camera_getViewMatrix(camera).data);
 		glUniformMatrix4fv(glGetUniformLocation(info->glId, "projection"), 1, GL_FALSE, camera_getProjectionMatrix(camera).data);
 	}
+
+	currentShader = info->glId;
 }
 
 void renderer_setRenderMode(GLenum renderMode)
@@ -80,6 +83,8 @@ void renderer_renderObject(struct Renderable renderable, struct Mat4 model)
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, renderable.texture);
+
+	glUniformMatrix4fv(glGetUniformLocation(currentShader, "model"), 1, GL_FALSE, model.data);
 
 	glBindVertexArray(renderable.vao);
 	if (renderable.eboUsed == 0)

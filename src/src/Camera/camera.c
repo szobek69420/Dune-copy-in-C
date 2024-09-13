@@ -13,15 +13,17 @@ struct Camera {
     struct Vec3 front, up, right;
     struct Vec3 world_up;
     float yaw, pitch;
-    float fov, aspectXY;
+    float width, height;
     float near_plane, far_plane;
-    float mouse_sensitivity;
     struct Mat4 view_matrix;
     struct Mat4 projection_matrix;
 };
 typedef struct Camera Camera;
 
-Camera* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_sensitivity)
+void camera_updateVectors(struct Camera* cum);
+
+
+Camera* camera_create(struct Vec3 position, struct Vec3 world_up)
 {
     Camera* cam=(Camera*)malloc(sizeof(Camera));
     if (cam == NULL)
@@ -33,11 +35,10 @@ Camera* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_se
     cam->world_up = world_up;
     cam->yaw = 0;
     cam->pitch = 0;
-    cam->fov = 60;
-    cam->aspectXY = 1;
+    cam->width = 10;
+    cam->height = 5;
     cam->near_plane = 0.1;
     cam->far_plane = 300;
-    cam->mouse_sensitivity = mouse_sensitivity;
     camera_updateVectors(&cam);
     return cam;
 }
@@ -47,14 +48,14 @@ void camera_destroy(struct Camera* cum)
     free(cum);
 }
 
-void camera_setProjection(struct Camera* cum, float fov, float aspectXY, float near_plane, float far_plane)
+void camera_setProjection(struct Camera* cum, float width, float height, float near_plane, float far_plane)
 {
     Camera* cam = (Camera*)cum;
-    cam->fov = fov;
+    cam->width = width;
+    cam->height = height;
     cam->near_plane = near_plane;
     cam->far_plane = far_plane;
-    cam->aspectXY = aspectXY;
-    cam->projection_matrix = mat4_perspective(cam->fov, cam->aspectXY, cam->near_plane, cam->far_plane);
+    cam->projection_matrix = mat4_ortho(-0.5f*width,0.5f*width,-0.5f*height,0.5f*height,near_plane, far_plane);
 }
 
 
@@ -86,3 +87,11 @@ void camera_updateVectors(struct Camera* cum)
 }
 
 #pragma warning( pop )
+
+void camera_setForward(struct Camera* cam, struct Vec3 forward)
+{
+    cam->front = vec3_normalize(forward);
+    cam->right = vec3_normalize(vec3_cross(cam->front, cam->world_up));
+    cam->up = vec3_normalize(vec3_cross(cam->right, cam->front));
+    cam->view_matrix = mat4_lookAt(cam->position, cam->front, cam->up);
+}

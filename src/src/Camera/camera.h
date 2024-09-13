@@ -7,10 +7,10 @@
 struct Camera;
 typedef struct Camera Camera;
 
-struct Camera* camera_create(struct Vec3 position, struct Vec3 world_up, float mouse_sensitivity);
+struct Camera* camera_create(struct Vec3 position, struct Vec3 world_up);
 void camera_destroy(struct Camera* cum);
-void camera_setProjection(struct Camera* cum, float fov, float aspectXY, float near_plane, float far_plane);
-void camera_updateVectors(struct Camera* cum);
+void camera_setProjection(struct Camera* cum, float width, float height, float near_plane, float far_plane);
+void camera_setForward(struct Camera* cum, struct Vec3 forward);
 
 struct Mat4 camera_getViewMatrix(struct Camera* cum);
 struct Mat4 camera_getProjectionMatrix(struct Camera* cum);
