@@ -10,8 +10,16 @@
 #include "Camera/camera.h"
 #include "Glm2/vec3.h"
 
+#include "Input/event.h"
+#include "Input/event_queue.h"
+#include "Input/input.h"
+
 GLFWwindow* init_window(const char* name, int width, int height);
-void windowResizeCallback(GLFWwindow* pwindow, int width, int height) { window_set(width, height); glViewport(0, 0, width, height); }
+void windowSizeCallback(GLFWwindow* window, int width, int height);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 //externables
 void* MAIN_CUM;
@@ -19,8 +27,13 @@ void* MAIN_CUM;
 int main()
 {
     GLFWwindow* window = init_window("Strobogus", 600, 600);
-    glfwSetWindowSizeCallback(window, windowResizeCallback);
-    windowResizeCallback(NULL, 600, 600);
+    glfwSetWindowSizeCallback(window, windowSizeCallback);
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+
+    windowSizeCallback(NULL, 600, 600);
 
     MAIN_CUM = camera_create((Vec3) { 0, 0, 5 }, (Vec3) { 0, 1, 0 });
     camera_setProjection(MAIN_CUM, 10, 10, 0, 10);
@@ -29,8 +42,11 @@ int main()
     renderer_setCamera(MAIN_CUM);
     gameObject_init();
 
+    input_init();
+    eventQueue_init();
+
     double frameStart = 0;
-    while (glfwWindowShouldClose(window) == 0)
+    while (glfwWindowShouldClose(window) == 0&&input_isKeyPressed(GLFW_KEY_ESCAPE)==0)
     {
         double deltaTime = glfwGetTime() - frameStart;
         frameStart += deltaTime;
@@ -39,6 +55,11 @@ int main()
             printf("Update skipped\n");
             continue;
         }
+
+        input_update();
+        Event e;
+        while ((e = eventQueue_poll()).type != NONE)
+            input_handleEvent(e);
 
         gameObject_update((float)deltaTime);
 
@@ -89,4 +110,35 @@ GLFWwindow* init_window(const char* name, int width, int height)
     glViewport(0, 0, width, height);
 
     return window;
+}
+
+
+
+//callbacks
+void windowSizeCallback(GLFWwindow* window, int width, int height)
+{
+    window_set(width, height);
+    glViewport(0, 0, width, height);
+}
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+        eventQueue_push((Event) { .type = KEY_PRESSED, .data.key_pressed = { key, mods } });
+    else if (action == GLFW_RELEASE)
+        eventQueue_push((Event) { .type = KEY_RELEASED, .data.key_released = { key } });
+}
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+        eventQueue_push((Event) { .type = MOUSE_BUTTON_PRESSED, .data.mouse_button_pressed = { button } });
+    else if (action == GLFW_RELEASE)
+        eventQueue_push((Event) { .type = MOUSE_BUTTON_RELEASED, .data.mouse_button_released = { button } });
+}
+void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
+{
+    eventQueue_push((Event) { .type = MOUSE_MOVED, .data.mouse_moved = { xpos, ypos } });
+}
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    eventQueue_push((Event) { .type = MOUSE_SCROLLED, .data.mouse_scrolled = { xoffset, yoffset } });
 }

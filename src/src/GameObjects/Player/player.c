@@ -5,6 +5,7 @@
 #include "../../Renderer/Window/window.h"
 #include "../../Camera/camera.h"
 
+
 const float vertices[] = {
 	-1, -1, 0, 0, 0,
 	1, -1, 0, 1, 0,
