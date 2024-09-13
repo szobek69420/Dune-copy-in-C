@@ -79,9 +79,9 @@ void checkForScreenResize()
 
 
 
-void player_render(void* player)
+void player_render(void* player, Mat4 parentModel)
 {
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLES);
-	renderer_renderObject(((Player*)player)->renderable, gameObject_getTransformModel(&(((Player*)player)->transform)));
+	renderer_renderObject(((Player*)player)->renderable, mat4_multiply(parentModel,gameObject_getTransformModel(&(((Player*)player)->transform))));
 }

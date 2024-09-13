@@ -79,21 +79,21 @@ void _updateHelper(void* gameObject, float deltaTime)
 		_updateHelper(seqtor_at(p->transform.children, i), deltaTime);
 }
 
-void _renderHelper(void* gameObject);
+void _renderHelper(void* gameObject, Mat4 parentModel);
 void gameObject_render(void* pwindow)
 {
 	for (int i = 0; i < seqtor_size(root->transform.children); i++)
-		_renderHelper(seqtor_at(root->transform.children, i));
+		_renderHelper(seqtor_at(root->transform.children, i), mat4_create(1));
 }
 
-void _renderHelper(void* gameObject)
+void _renderHelper(void* gameObject, Mat4 parentModel)
 {
 	RootObject* p = (RootObject*)gameObject;
 
 	switch (p->transform.type)
 	{
 	case PLAYER:
-		player_render(gameObject);
+		player_render(gameObject,parentModel);
 		break;
 
 	case TRACK_HANDLER:
@@ -101,8 +101,10 @@ void _renderHelper(void* gameObject)
 		break;
 	}
 
+	Mat4 model = mat4_multiply(parentModel, gameObject_getTransformModel(&(p->transform)));
+
 	for (int i = 0; i < seqtor_size(p->transform.children); i++)
-		_renderHelper(seqtor_at(p->transform.children, i));
+		_renderHelper(seqtor_at(p->transform.children, i),model);
 }
 
 void gameObject_init()
