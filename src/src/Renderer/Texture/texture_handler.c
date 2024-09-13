@@ -1,10 +1,28 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <glad/glad.h>
 #include <stb_image.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "texture_handler.h"
 #include <seqtor.h>
 
-static seqtor_of(texture_t) loadedTextures;
+
+struct TextureInfo {
+    texture_t id;
+
+    char* path;
+    GLint internalFormat;
+    GLenum format;
+    int filterType;
+    int flipVertically;
+
+    int referenceCount;
+};
+typedef struct TextureInfo TextureInfo;
+
+static seqtor_of(TextureInfo) loadedTextures;
 
 void textureHandler_init()
 {
@@ -20,6 +38,22 @@ void textureHandler_deinit()
 
 unsigned int textureHandler_loadImage(const char* pathToTexture, GLint internalFormat, GLenum format, int filterType, int flipVertically)
 {
+    for (int i = 0; i < seqtor_size(loadedTextures); i++)
+    {
+#define _t ((TextureInfo*)&(seqtor_at(loadedTextures,i)))
+        if (strcpy(pathToTexture, _t->path) == 0 &&
+            internalFormat == _t->internalFormat &&
+            format == _t->format &&
+            filterType == _t->filterType &&
+            flipVertically == _t->flipVertically)
+        {
+            _t->referenceCount++;
+            return _t->id;
+        }
+
+#undef _t
+    }
+
     stbi_set_flip_vertically_on_load(flipVertically);
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -46,13 +80,37 @@ unsigned int textureHandler_loadImage(const char* pathToTexture, GLint internalF
     }
     stbi_image_free(data);
 
-    seqtor_push_back(loadedTextures, texture);
+    TextureInfo ti;
+    ti.id = texture;
+    ti.internalFormat = internalFormat;
+    ti.format = format;
+    ti.filterType = filterType;
+    ti.flipVertically = flipVertically;
+    ti.path = (char*)malloc((strlen(pathToTexture) + 1) * sizeof(char));
+    strcpy(ti.path, pathToTexture);
+    ti.referenceCount = 1;
+
+    seqtor_push_back(loadedTextures, ti);
 
     return texture;
 }
 
 void textureHandler_deleteImage(texture_t texture)
 {
-    seqtor_remove(loadedTextures, texture);
-    glDeleteTextures(1, &texture);
+    for (int i = 0; i < seqtor_size(loadedTextures); i++)
+    {
+#define _t ((TextureInfo*)&(seqtor_at(loadedTextures,i)))
+        if (_t->id != texture)
+            continue;
+
+        _t->referenceCount--;
+        if (_t->referenceCount == 0)
+        {
+            free(_t->path);
+            glDeleteTextures(1, &(_t->id));
+            seqtor_remove_at(loadedTextures, i);
+        }
+        break;
+#undef _t
+    }
 }

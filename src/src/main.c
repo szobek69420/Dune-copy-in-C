@@ -19,7 +19,7 @@ int main()
     GLFWwindow* window = init_window("Strobogus", 600, 600);
 
     MAIN_CUM = camera_create((Vec3) { 0, 0, 3 }, (Vec3) { 0, 1, 0 });
-    camera_setProjection(MAIN_CUM, 10, 5, -10, 10);
+    camera_setProjection(MAIN_CUM, 10, 10, -10, 10);
     camera_setForward(MAIN_CUM, (Vec3) { 0, 0, -1 });
     renderer_init();
     renderer_setCamera(MAIN_CUM);

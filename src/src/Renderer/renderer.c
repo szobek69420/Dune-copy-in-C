@@ -141,6 +141,8 @@ void renderer_destroyRenderable(Renderable renderable)
 	glDeleteBuffers(1, &renderable.vbo);
 	if (renderable.eboUsed)
 		glDeleteBuffers(1, &renderable.ebo);
+
+	textureHandler_deleteImage(renderable.texture);
 }
 
 
