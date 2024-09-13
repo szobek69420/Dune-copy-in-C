@@ -5,11 +5,13 @@
 
 #include "GameObjects/game_object.h"
 #include "Renderer/renderer.h"
+#include "Renderer/Window/window.h"
 
 #include "Camera/camera.h"
 #include "Glm2/vec3.h"
 
 GLFWwindow* init_window(const char* name, int width, int height);
+void windowResizeCallback(GLFWwindow* pwindow, int width, int height) { window_set(width, height); glViewport(0, 0, width, height); }
 
 //externables
 void* MAIN_CUM;
@@ -17,9 +19,11 @@ void* MAIN_CUM;
 int main()
 {
     GLFWwindow* window = init_window("Strobogus", 600, 600);
+    glfwSetWindowSizeCallback(window, windowResizeCallback);
+    windowResizeCallback(NULL, 600, 600);
 
-    MAIN_CUM = camera_create((Vec3) { 0, 0, 3 }, (Vec3) { 0, 1, 0 });
-    camera_setProjection(MAIN_CUM, 10, 10, -10, 10);
+    MAIN_CUM = camera_create((Vec3) { 0, 0, 5 }, (Vec3) { 0, 1, 0 });
+    camera_setProjection(MAIN_CUM, 10, 10, 0, 10);
     camera_setForward(MAIN_CUM, (Vec3) { 0, 0, -1 });
     renderer_init();
     renderer_setCamera(MAIN_CUM);

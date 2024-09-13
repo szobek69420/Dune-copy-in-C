@@ -57,6 +57,9 @@
     <ClCompile Include="GameObjects\Player\player.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Window\window.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Player\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Window\window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

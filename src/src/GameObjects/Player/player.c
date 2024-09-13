@@ -2,6 +2,9 @@
 
 #include <stdlib.h>
 
+#include "../../Renderer/Window/window.h"
+#include "../../Camera/camera.h"
+
 const float vertices[] = {
 	-1, -1, 0, 0, 0,
 	1, -1, 0, 1, 0,
@@ -11,6 +14,11 @@ const float vertices[] = {
 const unsigned int indices[] = {
 	0, 2, 1, 2, 0, 3
 };
+
+extern void* MAIN_CUM;
+
+//prototypes
+void checkForScreenResize();
 
 void* player_create()
 {
@@ -35,6 +43,8 @@ void player_update(void* _player, float deltaTime)
 {
 	Player* player = (Player*)_player;
 	player->transform.position.x += deltaTime * 2;
+
+	checkForScreenResize();
 }
 
 void player_onStart(void* _player)
@@ -48,6 +58,22 @@ void player_onStart(void* _player)
 void player_onDestroy(void* player)
 {
 
+}
+
+void checkForScreenResize()
+{
+	static int previousWidth = 0, previousHeight = 0;
+
+	if (window_width() == previousWidth && window_height() == previousHeight)
+		return;
+
+	previousWidth = window_width();
+	previousHeight = window_height();
+
+	float projectionHeight = 10;
+	float projectionWidth = ((float)previousWidth / previousHeight) * projectionHeight;
+
+	camera_setProjection(MAIN_CUM, projectionWidth, projectionHeight, 0, 10);
 }
 
 
