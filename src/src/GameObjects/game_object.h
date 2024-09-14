@@ -18,8 +18,8 @@ struct Transform {
 	seqtor_of(void*) children;
 	struct Vec3 position;
 	struct Quaternion rotation;
-	struct Vec3 scale;
 	int isInitialized;
+	const Transform* parent;
 };
 typedef struct Transform Transform;
 
@@ -50,5 +50,9 @@ void gameObject_destroy(void* gameObject);
 Transform gameObject_createTransform(GameObjects type);
 void gameObject_destroyTransform(Transform* transform);
 Mat4 gameObject_getTransformModel(const Transform* transform);
+Mat4 gameObject_getTransformWorldModel(const Transform* transform);
+
+Vec3 gameObject_getWorldPosition(void* gameObject);
+void gameObject_setWorldPosition(void* gameObject, Vec3 position);
 
 #endif

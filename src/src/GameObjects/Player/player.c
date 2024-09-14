@@ -53,7 +53,6 @@ void player_onStart(void* _player)
 	Player* player = (Player*)_player;
 	player->transform.position = (Vec3){ 0,0,0 };
 	player->transform.rotation = (Quat){ 1,0,0,0 };
-	player->transform.scale = (Vec3){ 1,1,1 };
 }
 
 void player_onDestroy(void* player)
