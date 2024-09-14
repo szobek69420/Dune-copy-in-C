@@ -1,12 +1,15 @@
 #include "physics.h"
 
 #include <stdlib.h>
+#include <float.h>
+#include <string.h>
 
 #include "../Glm2/vec3.h"
+#include "../Glm2/vec4.h"
 #include <seqtor.h>
 
 struct BoundingBox {
-	Vec3 lowerBound, upperBound;
+	Vec4 bounds;//xy: lower.xy, zw: upper.xy
 };
 typedef struct BoundingBox BoundingBox;
 
@@ -38,6 +41,7 @@ struct Collider {
 	};
 };
 
+void physics_calculateBoundingBox(Collider* collider);
 
 
 static seqtor_of(Collider*) REGISTERED_COLLIDERS;
@@ -63,11 +67,46 @@ void physics_deinit()
 Collider* physics_createBallCollider()
 {
 	Collider* collider = (Collider*)malloc(sizeof(Collider));
+
+	collider->type = BALL;
+	collider->id = CURRENT_ID++;
+
+	collider->position = vec3_create(0);
+	collider->isMovable = 1;
+	physics_calculateBoundingBox(collider);
+
+	seqtor_init(collider->collisions, 1);
+	
+	collider->ball.radius = 1;
+
+
+	seqtor_push_back(REGISTERED_COLLIDERS, collider);
+
+	return collider;
 }
 
 Collider* physics_createPolygonCollider(const Vec3* points, int pointCount)
 {
+	Collider* collider = (Collider*)malloc(sizeof(Collider));
+	
+	collider->type = POLYGON;
+	collider->id = CURRENT_ID++;
 
+	collider->position = vec3_create(0);
+	collider->isMovable = 1;
+	physics_calculateBoundingBox(collider);
+
+	seqtor_init(collider->collisions, 1);
+
+	collider->polygon.points = (Vec3*)malloc(pointCount * sizeof(Vec3));
+	collider->polygon.pointCount = pointCount;
+	memcpy(collider->polygon.points, points, pointCount * sizeof(Vec3));
+
+	physics_calculateBoundingBox(collider);
+
+	seqtor_push_back(REGISTERED_COLLIDERS, collider);
+
+	return collider;
 }
 
 void physics_destroyCollider(Collider* collider)
@@ -96,22 +135,82 @@ void physics_destroyCollider(Collider* collider)
 	free(collider);
 }
 
-void physics_getBallParam(BallColliderParameter paramType, void* pbuffer)
+void physics_getColliderParam(Collider* collider, ColliderParameter paramType, void* pbuffer)
 {
+	switch (paramType)
+	{
+		case POSITION_VEC3:
+			*(Vec3*)pbuffer = collider->position;
+			break;
 
+		case MOVABLE_INT:
+			*(int*)pbuffer = collider->isMovable;
+			break;
+
+		case RADIUS_FLOAT:
+			if (collider->type != BALL)
+			{
+				printf("Physics: Invalid parameter type\n");
+				break;
+			}
+			*(float*)pbuffer = collider->ball.radius;
+			break;
+	}
 }
 
-void physics_setBallParam(BallColliderParameter paramType, void* pvalue)
+void physics_setColliderParam(Collider* collider, ColliderParameter paramType, void* pvalue)
 {
+	switch (paramType)
+	{
+		case POSITION_VEC3:
+			collider->position = *(Vec3*)pvalue;
+			break;
 
+		case MOVABLE_INT:
+			collider->isMovable = *(int*)pvalue;
+			break;
+
+		case RADIUS_FLOAT:
+			if (collider->type != BALL)
+			{
+				printf("Physics: Invalid parameter type\n");
+				break;
+			}
+			collider->ball.radius = *(float*)pvalue;
+			break;
+	}
 }
 
-void physics_getPolygonParam(BallColliderParameter paramType, void* pbuffer)
+
+void physics_calculateBoundingBox(Collider* collider)
 {
+	switch (collider->type)
+	{
+	case BALL:
+		collider->boundingBox.bounds = (Vec4){
+			collider->position.x - collider->ball.radius,
+			collider->position.y - collider->ball.radius,
+			collider->position.x + collider->ball.radius,
+			collider->position.y + collider->ball.radius
+		};
+		break;
 
-}
+	case POLYGON:
+		collider->boundingBox.bounds = (Vec4){ FLT_MAX,FLT_MAX,FLT_MIN,FLT_MIN };
+		for (int i = 0; i < collider->polygon.pointCount; i++)
+		{
+			Vec3* point = &(collider->polygon.points[i]);
 
-void physics_setPolygonParam(BallColliderParameter paramType, void* pvalue)
-{
+			if (point->x < collider->boundingBox.bounds.x)
+				collider->boundingBox.bounds.x=point->x;
+			else if(point->x>collider->boundingBox.bounds.z)
+				collider->boundingBox.bounds.z = point->x;
 
+			if (point->y < collider->boundingBox.bounds.y)
+				collider->boundingBox.bounds.y = point->y;
+			else if (point->y > collider->boundingBox.bounds.w)
+				collider->boundingBox.bounds.w = point->y;
+		}
+		break;
+	}
 }

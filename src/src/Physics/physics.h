@@ -11,18 +11,14 @@ enum ColliderType {
 };
 typedef enum ColliderType ColliderType;
 
-enum BallColliderParameter {
-	BALL_POSITION_VEC3,
-	BALL_RADIUS_FLOAT,
-	BALL_MOVABLE_INT
-};
-typedef enum BallColliderParameter BallColliderParameter;
+enum ColliderParameter {
+	POSITION_VEC3,
+	MOVABLE_INT,
 
-enum PolygonColliderParameter {
-	POLYGON_POSITION_VEC3,
-	POLYGON_MOVABLE_INT
+	RADIUS_FLOAT
 };
-typedef enum PolygonColliderParameter PolygonColliderParameter;
+typedef enum ColliderParameter ColliderParameter;
+
 
 struct CollisionInfo {
 	Collider* otherCollider; //if null that means that no collision has happened in the last physics update
@@ -39,10 +35,8 @@ Collider* physics_createBallCollider();
 Collider* physics_createPolygonCollider(const Vec3* points, int pointCount);
 void physics_destroyCollider(Collider* collider);
 
-void physics_getBallParam(BallColliderParameter paramType, void* pbuffer);
-void physics_setBallParam(BallColliderParameter paramType, void* pvalue);
-
-void physics_getPolygonParam(BallColliderParameter paramType, void* pbuffer);
-void physics_setPolygonParam(BallColliderParameter paramType, void* pvalue);
+void physics_getColliderParam(Collider* collider, ColliderParameter paramType, void* pbuffer);
+//pvalue must be the address of the value that is given to the function (for an int: int*, for a float array: float*)
+void physics_setColliderParam(Collider* collider, ColliderParameter paramType, void* pvalue);
 
 #endif
