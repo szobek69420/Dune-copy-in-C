@@ -42,10 +42,17 @@ struct Collider {
 };
 
 void physics_calculateBoundingBox(Collider* collider);
+float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2);
+int physics_detectCollision(Collider* c1, Collider* c2);//returns -1 if no bounding box contact, 0 if no collision, 1 if collision
+
+static Collider* COMPARED_COLLIDER=NULL;
+int physics_stepHelper(const void* c1, const void* c2);//ez a fuggveny megnezi, hogy melyik collider van kozelebb a COMPARED_COLLIDER-hez a bounding boxok szerint
 
 
 static seqtor_of(Collider*) REGISTERED_COLLIDERS;
 static int CURRENT_ID = 69420;
+
+static float DELTA_TIME = 0;
 
 void physics_init()
 {
@@ -54,7 +61,34 @@ void physics_init()
 
 void physics_step(float deltaTime)
 {
+	const int LENGTH = seqtor_size(REGISTERED_COLLIDERS);
+	DELTA_TIME = deltaTime;
 
+	//clear previous collision info
+	for (int i = 0; i < LENGTH; i++)
+		seqtor_clear(seqtor_at(REGISTERED_COLLIDERS, i)->collisions);
+
+
+	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);
+	memcpy(colliders, REGISTERED_COLLIDERS.data, LENGTH * sizeof(Collider*));
+
+	for (int i = 0; i < LENGTH; i++)
+	{
+		Collider* current = seqtor_at(REGISTERED_COLLIDERS, i);
+		COMPARED_COLLIDER = current;
+		qsort(colliders, LENGTH, sizeof(Collider*), physics_stepHelper);
+
+		for (int j = 0; j < LENGTH; j++)
+		{
+			Collider* otherCurrent = colliders[j];
+			if (current == otherCurrent)
+				continue;
+
+			int collision = physics_detectCollision(current, otherCurrent);
+			if (collision == -1)
+				break;
+		}
+	}
 }
 
 void physics_deinit()
@@ -213,4 +247,107 @@ void physics_calculateBoundingBox(Collider* collider)
 		}
 		break;
 	}
+}
+
+
+int physics_stepHelper(const void* c1, const void* c2)
+{
+	float szam = physics_boundingBoxPenetration(COMPARED_COLLIDER, c2) - physics_boundingBoxPenetration(COMPARED_COLLIDER, c1);
+	
+	if (szam > 0)
+		return 1;
+	if (szam == 0)
+		return 0;
+	return -1;
+}
+
+
+//collision detection
+int physics_collisionBallBall(Collider* c1, Collider* c2);
+int physics_collisionPolygonPolygon(Collider* c1, Collider* c2);
+int physics_collisionBallPolygon(Collider* ball, Collider* polygon);
+
+int physics_detectCollision(Collider* c1, Collider* c2)//returns -1 if no bounding box contact, 0 if no collision, 1 if collision
+{
+	if (physics_boundingBoxPenetration(c1, c2) <= 0)
+		return -1;
+
+
+	int collision = 0;
+
+	switch (c1->type)
+	{
+	case BALL:
+		switch (c2->type)
+		{
+		case BALL:
+			collision=physics_collisionBallBall(c1, c2);
+			break;
+
+		case POLYGON:
+			collision = physics_collisionBallPolygon(c1, c2);
+			break;
+		}
+		break;
+
+	case POLYGON:
+		switch (c2->type)
+		{
+		case BALL:
+			collision = physics_collisionBallPolygon(c2, c1);
+			break;
+
+		case POLYGON:
+			collision = physics_collisionPolygonPolygon(c1, c2);
+			break;
+		}
+		break;
+	}
+
+	return collision;
+}
+
+float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2)//negative value means no penetration
+{
+	float penetration = FLT_MAX;
+
+	if (c1->boundingBox.bounds.x > c2->boundingBox.bounds.x && c1->boundingBox.bounds.x < c2->boundingBox.bounds.z)
+	{
+		if (penetration > c2->boundingBox.bounds.z - c1->boundingBox.bounds.x)
+			penetration = c2->boundingBox.bounds.z - c1->boundingBox.bounds.x;
+	}
+	if (c1->boundingBox.bounds.z > c2->boundingBox.bounds.x && c1->boundingBox.bounds.z < c2->boundingBox.bounds.z)
+	{
+		if (penetration > c1->boundingBox.bounds.z - c2->boundingBox.bounds.x)
+			penetration = c1->boundingBox.bounds.z - c2->boundingBox.bounds.x;
+	}
+
+	if (c1->boundingBox.bounds.y > c2->boundingBox.bounds.y && c1->boundingBox.bounds.y < c2->boundingBox.bounds.w)
+	{
+		if (penetration > c2->boundingBox.bounds.w - c1->boundingBox.bounds.y)
+			penetration = c2->boundingBox.bounds.w - c1->boundingBox.bounds.y;
+	}
+	if (c1->boundingBox.bounds.y > c2->boundingBox.bounds.y && c1->boundingBox.bounds.w < c2->boundingBox.bounds.w)
+	{
+		if (penetration > c1->boundingBox.bounds.w - c2->boundingBox.bounds.y)
+			penetration = c1->boundingBox.bounds.w - c2->boundingBox.bounds.y;
+	}
+
+	return penetration;
+}
+
+
+int physics_collisionBallBall(Collider* c1, Collider* c2)
+{
+
+}
+
+int physics_collisionPolygonPolygon(Collider* c1, Collider* c2)
+{
+	return 0;//idk ilyet nem tudok
+}
+
+int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
+{
+
 }
