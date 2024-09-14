@@ -6,4 +6,6 @@ uniform sampler2D tex;
 void main()
 {
 	fragmentColour=texture(tex, uv);
+	if(fragmentColour.a<0.003)
+		discard;
 }

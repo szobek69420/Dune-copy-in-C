@@ -19,7 +19,7 @@ struct Transform {
 	struct Vec3 position;
 	struct Quaternion rotation;
 	int isInitialized;
-	const Transform* parent;
+	const struct Transform* parent;
 };
 typedef struct Transform Transform;
 

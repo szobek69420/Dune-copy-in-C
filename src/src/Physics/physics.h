@@ -35,6 +35,7 @@ void physics_step(float deltaTime);
 void physics_deinit();
 
 Collider* physics_createBallCollider();
+//the points should be given in a clockwise order
 Collider* physics_createPolygonCollider(const Vec3* points, int pointCount);
 void physics_destroyCollider(Collider* collider);
 

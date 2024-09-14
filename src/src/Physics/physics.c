@@ -1,5 +1,7 @@
 #include "physics.h"
 
+#include <stdlib.h>
+
 #include "../Glm2/vec3.h"
 #include <seqtor.h>
 
@@ -60,7 +62,7 @@ void physics_deinit()
 
 Collider* physics_createBallCollider()
 {
-
+	Collider* collider = (Collider*)malloc(sizeof(Collider));
 }
 
 Collider* physics_createPolygonCollider(const Vec3* points, int pointCount)

@@ -66,6 +66,9 @@
     <ClCompile Include="Input\event_queue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Physics\physics.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Input\event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\physics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,6 +14,11 @@
 #include "Input/event_queue.h"
 #include "Input/input.h"
 
+#ifdef _MSC_VER
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
 GLFWwindow* init_window(const char* name, int width, int height);
 void windowSizeCallback(GLFWwindow* window, int width, int height);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -26,6 +31,8 @@ void* MAIN_CUM;
 
 int main()
 {
+    //_CrtSetBreakAlloc(411);
+
     GLFWwindow* window = init_window("Strobogus", 600, 600);
     glfwSetWindowSizeCallback(window, windowSizeCallback);
     glfwSetKeyCallback(window, keyCallback);
@@ -78,6 +85,11 @@ int main()
     gameObject_deinit();
     renderer_deinit();
     camera_destroy(MAIN_CUM);
+
+#ifdef _CRTDBG_MAP_ALLOC
+    _CrtDumpMemoryLeaks();
+#endif
+
     return 0;
 }
 
