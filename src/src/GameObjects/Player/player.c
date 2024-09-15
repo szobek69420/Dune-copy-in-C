@@ -33,6 +33,14 @@ const float vertices[] = {
 	1.000f, 0.000f, 0.000f, 1.000f, 0.500f
 };
 
+const float vertices2[] = {
+	0.2f,0,0,0.6f,0.5f,
+	1,-1,0,1,0,
+	-1,-1,0,0,0,
+	-1,1,0,0,1,
+	1,1,0,1,1
+};
+
 extern void* MAIN_CUM;
 
 //prototypes
@@ -42,19 +50,25 @@ void* player_create()
 {
 	Player* player = (Player*)malloc(sizeof(Player));
 
-	player->renderable = renderer_createRenderable(vertices, 110, NULL, 0);
-	player->renderable.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
+	player->renderable1 = renderer_createRenderable(vertices, 110, NULL, 0);
+	player->renderable1.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
+
+	player->renderable2 = renderer_createRenderable(vertices2, 25, NULL, 0);
+	player->renderable2.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
 
 	Vec3 helper;
 	player->collider1 = physics_createBallCollider();
-	helper = (Vec3){ 5,0,0 };
+	helper = (Vec3){ 4,0,0 };
 	physics_setColliderParam(player->collider1, POSITION_VEC3, &helper);
 	helper = (Vec3){ -1,0,0 };
 	physics_setColliderParam(player->collider1, VELOCITY_VEC3, &helper);
+	float radious = 0.5f;
+	physics_setColliderParam(player->collider1, RADIUS_FLOAT, &radious);
 
-	player->collider2 = physics_createBallCollider();
-	helper = (Vec3){ -10,1,0 };
+	Vec3 points[] = { {1,1,0},{0.2f,0,0} ,{1,-1,0},{-1,-1,0},{-1,1,0},{1,1,0} };
+	player->collider2 = physics_createPolygonCollider(points,5);
+	helper = (Vec3){ -10,0.3f,0 };
 	physics_setColliderParam(player->collider2, POSITION_VEC3, &helper);
 	helper = (Vec3){ 3,0,0 };
 	physics_setColliderParam(player->collider2, VELOCITY_VEC3, &helper);
@@ -66,7 +80,10 @@ void player_destroy(void* _player)//releases resources
 {
 	Player* player = _player;
 	gameObject_destroyTransform(&(player->transform));
-	renderer_destroyRenderable(player->renderable);
+	renderer_destroyRenderable(player->renderable1);
+	renderer_destroyRenderable(player->renderable2);
+	physics_destroyCollider(player->collider1);
+	physics_destroyCollider(player->collider2);
 	free(player);
 }
 
@@ -101,7 +118,7 @@ void checkForScreenResize()
 	previousWidth = window_width();
 	previousHeight = window_height();
 
-	float projectionHeight = 15;
+	float projectionHeight = 7;
 	float projectionWidth = ((float)previousWidth / previousHeight) * projectionHeight;
 
 	camera_setProjection(MAIN_CUM, projectionWidth, projectionHeight, 0, 10);
@@ -117,8 +134,8 @@ void player_render(void* player, Mat4 parentModel)
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
 	physics_getColliderParam(((Player*)player)->collider1, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable, mat4_multiply(parentModel,mat4_translate(mat4_create(1),pos)));
+	renderer_renderObject(((Player*)player)->renderable1, mat4_multiply(parentModel, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 0.5f, 0.5f, 1 })));
 
 	physics_getColliderParam(((Player*)player)->collider2, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable, mat4_multiply(parentModel, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 1, -1, 1 })));
+	renderer_renderObject(((Player*)player)->renderable2, mat4_multiply(parentModel, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 1, 1, 1 })));
 }

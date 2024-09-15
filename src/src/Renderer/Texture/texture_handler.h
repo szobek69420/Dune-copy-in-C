@@ -1,6 +1,8 @@
 #ifndef TEXTURE_HANDLER_H
 #define TEXTURE_HANDLER_H
 
+#include <glad/glad.h>
+
 typedef unsigned int texture_t;
 
 texture_t textureHandler_loadImage(const char* pathToTexture, GLint internalFormat, GLenum format, int filterType, int flipVertically);

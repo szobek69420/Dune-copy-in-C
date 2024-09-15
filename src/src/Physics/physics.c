@@ -42,6 +42,7 @@ struct Collider {
 	};
 };
 
+
 void physics_calculateBoundingBox(Collider* collider);
 float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2);
 int physics_detectCollision(Collider* c1, Collider* c2);//returns -1 if no bounding box contact, 0 if no collision, 1 if collision
@@ -298,6 +299,8 @@ int physics_stepHelper(const void* c1, const void* c2)
 
 
 //collision detection
+Vec3 physics_closestPointOfLineSegment(Vec3 point, Vec3 lineA, Vec3 lineB);
+
 int physics_collisionBallBall(Collider* c1, Collider* c2);
 int physics_collisionPolygonPolygon(Collider* c1, Collider* c2);
 int physics_collisionBallPolygon(Collider* ball, Collider* polygon);
@@ -453,5 +456,134 @@ int physics_collisionPolygonPolygon(Collider* c1, Collider* c2)
 
 int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 {
+	Vec3 resolutionDir = (Vec3){ 0,0,0 };
+	float resolutionLength = FLT_MAX;
 
+	Vec3 colliderPos = polygon->position;
+	Vec3* points = malloc(sizeof(Vec3) * polygon->polygon.pointCount);
+	memcpy(points, polygon->polygon.points, sizeof(Vec3) * polygon->polygon.pointCount);
+	points[0] = (Vec3){ points[0].x + colliderPos.x,points[0].y + colliderPos.y,points[0].z + colliderPos.z };
+
+
+	for (int i = 0; i < polygon->polygon.pointCount - 1; i++)
+	{
+		points[i+1] = (Vec3){ points[i+1].x + colliderPos.x,points[i+1].y + colliderPos.y,points[i+1].z + colliderPos.z };
+
+		Vec3 delta = vec3_subtract(
+			ball->position,
+			physics_closestPointOfLineSegment(ball->position, points[i], points[i + 1])
+		);
+
+		float deltaLength = vec3_magnitude(delta);
+		if (deltaLength >= ball->ball.radius)
+			continue;
+
+		Vec3 resolution;
+
+		//a golyo kozeppontja a vonal belso oldalan van-e
+		if (vec3_dot(
+			delta,
+			(Vec3) {-(points[i + 1].y - points[i].y), points[i + 1].x - points[i].x, 0}
+		)<0)
+		{
+			resolution = vec3_scale(vec3_normalize(delta), -vec3_magnitude(delta) - ball->ball.radius);
+		}
+		else //ha nem
+		{
+			resolution = vec3_scale(vec3_normalize(delta), ball->ball.radius - deltaLength);
+		}
+
+
+		if (resolutionLength > vec3_magnitude(resolution))
+		{
+			resolutionDir = resolution;
+			resolutionLength = vec3_magnitude(resolution);
+		}
+	}
+
+	free(points);
+
+	if (resolutionLength == FLT_MAX)
+		return 0;
+
+	//innentol kb a ballball-bol lett masolva
+	Vec3 distanceNormal = vec3_normalize(resolutionDir);
+	Vec3 delta = resolutionDir;
+
+	Collider* c1 = polygon;
+	Collider* c2 = ball;
+	if (c2->isMovable == 0)
+	{
+		Collider* temp = c2;
+		c2 = c1;
+		c1 = temp;
+		delta = (Vec3){ -1 * delta.x,-1 * delta.y,-1 * delta.z };
+		distanceNormal = (Vec3){ -1 * distanceNormal.x,-1 * distanceNormal.y,-1 * distanceNormal.z };
+	}
+
+	if (c1->isMovable == 0)
+	{
+		c2->position = vec3_sum(c2->position, delta);
+		Vec3 prevVelocity = c2->velocity;
+		c2->velocity = vec3_reflect(c2->velocity, distanceNormal);
+
+		CollisionInfo ci;
+		ci.otherCollider = c1;
+		ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity, prevVelocity), 1.0f / DELTA_TIME);
+
+		seqtor_push_back(c2->collisions, ci);
+
+		return 1;
+	}
+
+	delta = vec3_scale(delta, 0.5f);
+
+	Vec3 c1Proj = vec3_scale(distanceNormal, vec3_dot(c1->velocity, distanceNormal));
+	Vec3 c2Proj = vec3_scale(distanceNormal, vec3_dot(c2->velocity, distanceNormal));
+
+	Vec3 c1PrevVelocity = c1->velocity;
+	Vec3 c2PrevVelocity = c2->velocity;
+
+	c1->velocity = vec3_subtract(c1->velocity, c1Proj);
+	c1->velocity = vec3_sum(c1->velocity, c2Proj);
+
+	c2->velocity = vec3_subtract(c2->velocity, c2Proj);
+	c2->velocity = vec3_sum(c2->velocity, c1Proj);
+
+	c1->position = vec3_sum(c1->position, (Vec3) { -1 * delta.x, -1 * delta.y, -1 * delta.z });
+	c2->position = vec3_sum(c2->position, delta);
+
+
+	CollisionInfo ci;
+
+	ci.otherCollider = c2;
+	ci.collisionForce = vec3_scale(vec3_subtract(c1->velocity, c1PrevVelocity), 1.0f / DELTA_TIME);
+	seqtor_push_back(c1->collisions, ci);
+
+	ci.otherCollider = c1;
+	ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity, c2PrevVelocity), 1.0f / DELTA_TIME);
+	seqtor_push_back(c2->collisions, ci);
+
+	return 1;
+}
+
+Vec3 physics_closestPointOfLineSegment(Vec3 point, Vec3 lineA, Vec3 lineB)
+{
+	Vec3 delta = (Vec3){ point.x - lineA.x,point.y - lineA.y,point.z - lineA.z };
+	Vec3 lineDir = vec3_normalize((Vec3) { lineB.x - lineA.x, lineB.y - lineA.y, lineB.z - lineA.z });
+
+	Vec3 projectionToLine = vec3_sum(lineA, vec3_scale(lineDir, vec3_dot(delta, lineDir)));
+
+	//is the point before lineA?
+	if (vec3_dot(lineDir, (Vec3) { projectionToLine.x - lineA.x, projectionToLine.y - lineA.y, projectionToLine.z - lineA.z })<0)
+	{
+		projectionToLine = lineA;
+	}
+	//is the point over lineB?
+	else if (vec3_sqrMagnitude((Vec3) { projectionToLine.x - lineA.x, projectionToLine.y - lineA.y, projectionToLine.z - lineA.z }) > vec3_sqrMagnitude((Vec3) { lineB.x - lineA.x, lineB.y - lineA.y, lineB.z - lineA.z }))
+	{
+		projectionToLine = lineB;
+	}
+
+	return projectionToLine;
 }

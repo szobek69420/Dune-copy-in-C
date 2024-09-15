@@ -1,11 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <glad/glad.h>
+#include "texture_handler.h"
+
 #include <stb_image.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "texture_handler.h"
 #include <seqtor.h>
 
 
@@ -22,7 +22,7 @@ struct TextureInfo {
 };
 typedef struct TextureInfo TextureInfo;
 
-static seqtor_of(TextureInfo) loadedTextures;
+static seqtor_of(struct TextureInfo) loadedTextures;
 
 void textureHandler_init()
 {
@@ -40,15 +40,15 @@ unsigned int textureHandler_loadImage(const char* pathToTexture, GLint internalF
 {
     for (int i = 0; i < seqtor_size(loadedTextures); i++)
     {
-#define _t ((TextureInfo*)&(seqtor_at(loadedTextures,i)))
-        if (strcpy(pathToTexture, _t->path) == 0 &&
-            internalFormat == _t->internalFormat &&
-            format == _t->format &&
-            filterType == _t->filterType &&
-            flipVertically == _t->flipVertically)
+#define _t (seqtor_at(loadedTextures,i))
+        if (strcmp(pathToTexture, _t.path) == 0 &&
+            internalFormat == _t.internalFormat &&
+            format == _t.format &&
+            filterType == _t.filterType &&
+            flipVertically == _t.flipVertically)
         {
-            _t->referenceCount++;
-            return _t->id;
+            _t.referenceCount++;
+            return _t.id;
         }
 
 #undef _t

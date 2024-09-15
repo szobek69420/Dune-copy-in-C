@@ -8,7 +8,8 @@
 
 struct Player {
 	Transform transform;
-	Renderable renderable;
+	Renderable renderable1;
+	Renderable renderable2;
 	Collider* collider1;
 	Collider* collider2;
 };
