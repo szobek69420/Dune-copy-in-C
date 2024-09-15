@@ -179,7 +179,6 @@ void gameObject_destroy(void* gameObject)
 	}
 }
 
-int transformCount = 0;
 Transform gameObject_createTransform(GameObjects type)
 {
 	Transform transform;
@@ -192,14 +191,12 @@ Transform gameObject_createTransform(GameObjects type)
 	transform.type = type;
 
 	transform.parent = NULL;
-	printf("transform count: %d\n", ++transformCount);
 	return transform;
 }
 
 void gameObject_destroyTransform(Transform* transform)
 {
 	seqtor_destroy(transform->children);
-	printf("transform count: %d\n", --transformCount);
 }
 
 Mat4 gameObject_getTransformModel(const Transform* transform)

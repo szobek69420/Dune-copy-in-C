@@ -19,6 +19,9 @@ float vec3_magnitude(struct Vec3);
 struct Vec3 vec3_normalize(struct Vec3);
 struct Vec3 vec3_scale(struct Vec3, float);
 
+//normal must not be a null vector
+struct Vec3 vec3_reflect(struct Vec3 vec, struct Vec3 normal);
+
 void vec3_print(struct Vec3*);
 
 #endif

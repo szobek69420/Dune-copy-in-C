@@ -30,9 +30,10 @@ struct Collider {
 	int isMovable;
 
 	Vec3 position;
+	Vec3 velocity;
 	BoundingBox boundingBox;//local to the collider's space
 
-	seqtor_of(CollisionInfo) collisions;
+	seqtor_of(CollisionInfo) collisions;//only on movable colliders is this set
 
 
 	union {
@@ -67,6 +68,10 @@ void physics_step(float deltaTime)
 	//clear previous collision info
 	for (int i = 0; i < LENGTH; i++)
 		seqtor_clear(seqtor_at(REGISTERED_COLLIDERS, i)->collisions);
+
+	//add velocity to position
+	for (int i = 0; i < LENGTH; i++)
+		seqtor_at(REGISTERED_COLLIDERS, i)->position = vec3_sum(seqtor_at(REGISTERED_COLLIDERS, i)->position, vec3_scale(seqtor_at(REGISTERED_COLLIDERS, i)->velocity, DELTA_TIME));
 
 
 	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);
@@ -106,6 +111,7 @@ Collider* physics_createBallCollider()
 	collider->id = CURRENT_ID++;
 
 	collider->position = vec3_create(0);
+	collider->velocity = vec3_create(0);
 	collider->isMovable = 1;
 	physics_calculateBoundingBox(collider);
 
@@ -127,6 +133,7 @@ Collider* physics_createPolygonCollider(const Vec3* points, int pointCount)
 	collider->id = CURRENT_ID++;
 
 	collider->position = vec3_create(0);
+	collider->velocity = vec3_create(0);
 	collider->isMovable = 1;
 	physics_calculateBoundingBox(collider);
 
@@ -177,6 +184,10 @@ void physics_getColliderParam(Collider* collider, ColliderParameter paramType, v
 			*(Vec3*)pbuffer = collider->position;
 			break;
 
+		case VELOCITY_VEC3:
+			*(Vec3*)pbuffer = collider->velocity;
+			break;
+
 		case MOVABLE_INT:
 			*(int*)pbuffer = collider->isMovable;
 			break;
@@ -200,6 +211,10 @@ void physics_setColliderParam(Collider* collider, ColliderParameter paramType, v
 			collider->position = *(Vec3*)pvalue;
 			break;
 
+		case VELOCITY_VEC3:
+			collider->velocity = *(Vec3*)pvalue;
+			break;
+
 		case MOVABLE_INT:
 			collider->isMovable = *(int*)pvalue;
 			break;
@@ -213,6 +228,18 @@ void physics_setColliderParam(Collider* collider, ColliderParameter paramType, v
 			collider->ball.radius = *(float*)pvalue;
 			break;
 	}
+}
+
+CollisionInfo* physics_getColliderCollisions(Collider* collider, int* count)
+{
+	*count = seqtor_size(collider->collisions);
+
+	if (*count == 0)
+		return NULL;
+
+	CollisionInfo* collisions = malloc((*count) * sizeof(CollisionInfo));
+	memcpy(collisions, collider->collisions.data, (*count) * sizeof(CollisionInfo));
+	return collisions;
 }
 
 
@@ -271,6 +298,9 @@ int physics_detectCollision(Collider* c1, Collider* c2)//returns -1 if no boundi
 {
 	if (physics_boundingBoxPenetration(c1, c2) <= 0)
 		return -1;
+
+	if (c1->isMovable == 0 && c2->isMovable == 0)
+		return 0;
 
 
 	int collision = 0;
@@ -337,9 +367,65 @@ float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2)//ne
 }
 
 
-int physics_collisionBallBall(Collider* c1, Collider* c2)
+int physics_collisionBallBall(Collider* c1, Collider* c2)//assumes that at least one of them is movable
 {
+	if (c2->isMovable == 0)
+	{
+		Collider* temp = c2;
+		c2 = c1;
+		c1 = temp;
+	}
 
+	Vec3 distanceVec = vec3_subtract(c2->position, c1->position);
+	float distance = vec3_magnitude(distanceVec);
+
+	if (distance >= c2->ball.radius + c1->ball.radius)
+		return 0;
+
+	Vec3 distanceNormal = vec3_normalize(distanceVec);
+	Vec3 delta = vec3_scale(distanceNormal, (c2->ball.radius + c1->ball.radius) - distance);
+
+	if (c1->isMovable == 0)
+	{
+		c2->position = vec3_sum(c2->position, delta);
+		Vec3 prevVelocity = c2->velocity;
+		c2->velocity = vec3_reflect(c2->velocity, distanceNormal);
+
+		CollisionInfo ci;
+		ci.otherCollider = c1;
+		ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity,prevVelocity), 1.0f / DELTA_TIME);
+
+		seqtor_push_back(c2->collisions, ci);
+
+		return 1;
+	}
+
+	delta = vec3_scale(delta, 0.5f);
+	
+	Vec3 c1Proj = vec3_scale(distanceNormal, vec3_dot(c1->velocity, distanceNormal));
+	Vec3 c2Proj = vec3_scale(distanceNormal, vec3_dot(c2->velocity, distanceNormal));
+
+	Vec3 c1PrevVelocity = c1->velocity;
+	Vec3 c2PrevVelocity = c2->velocity;
+
+	c1->velocity = vec3_subtract(c1->velocity, c1Proj);
+	c1->velocity = vec3_sum(c1->velocity, (Vec3) { -1 * c2Proj.x, -1 * c2Proj.y, -1 * c2Proj.z });
+
+	c2->velocity = vec3_subtract(c2->velocity, c2Proj);
+	c2->velocity = vec3_sum(c2->velocity, (Vec3) { -1 * c1Proj.x, -1 * c1Proj.y, -1 * c1Proj.z });
+
+
+	CollisionInfo ci;
+
+	ci.otherCollider = c2;
+	ci.collisionForce = vec3_scale(vec3_subtract(c1->velocity, c1PrevVelocity), 1.0f / DELTA_TIME);
+	seqtor_push_back(c1->collisions, ci);
+
+	ci.otherCollider = c1;
+	ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity, c2PrevVelocity), 1.0f / DELTA_TIME);
+	seqtor_push_back(c2->collisions, ci);
+
+	return 1;
 }
 
 int physics_collisionPolygonPolygon(Collider* c1, Collider* c2)

@@ -49,6 +49,13 @@ Vec3 vec3_scale(Vec3 vec, float scalar)
     return (Vec3){ vec.x * scalar, vec.y * scalar, vec.z * scalar };
 }
 
+struct Vec3 vec3_reflect(struct Vec3 vec, struct Vec3 normal)
+{
+    normal = vec3_normalize(normal);
+    vec = vec3_subtract(vec, vec3_scale(normal, 2 * vec3_dot(vec, normal)));
+    return vec;
+}
+
 void vec3_print(Vec3* vec) 
 {
     printf("(%.2f; %.2f; %.2f)\n", vec->x, vec->y, vec->z);

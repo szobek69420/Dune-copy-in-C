@@ -13,6 +13,7 @@ typedef enum ColliderType ColliderType;
 
 enum ColliderParameter {
 	POSITION_VEC3,
+	VELOCITY_VEC3,
 	MOVABLE_INT,
 
 	RADIUS_FLOAT
@@ -38,5 +39,8 @@ void physics_destroyCollider(Collider* collider);
 void physics_getColliderParam(Collider* collider, ColliderParameter paramType, void* pbuffer);
 //pvalue must be the address of the value that is given to the function (for an int: int*, for a float array: float*)
 void physics_setColliderParam(Collider* collider, ColliderParameter paramType, void* pvalue);
+
+//count is a buffer, in which the number of collisions gets written. THE RETURN VALUE HAS TO BE FREED MANUALLY!!!
+CollisionInfo* physics_getColliderCollisions(Collider* collider, int* count);
 
 #endif
