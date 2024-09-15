@@ -22,7 +22,7 @@ typedef enum ColliderParameter ColliderParameter;
 
 
 struct CollisionInfo {
-	Collider* otherCollider; //if null that means that no collision has happened in the last physics update
+	void* otherCollider; //if null that means that no collision has happened in the last physics update
 	Vec3 collisionForce;
 };
 typedef struct CollisionInfo CollisionInfo;

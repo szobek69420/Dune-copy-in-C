@@ -151,6 +151,7 @@
         fputs("seqtor_clear failed!\n", stderr); \
             abort(); \
     } \
+    (VEC).data=__p;\
 } while(0)
 
 //ha nem hasznalod tobbe a vektort, akkor hivd meg ezt (csak akkor)

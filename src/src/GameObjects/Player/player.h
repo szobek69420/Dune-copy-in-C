@@ -2,12 +2,15 @@
 #define PLAYER_H
 
 #include "../game_object.h"
+#include "../../Physics/physics.h"
 #include "../../Renderer/renderer.h"
 #include "../../Glm2/mat4.h"
 
 struct Player {
 	Transform transform;
 	Renderable renderable;
+	Collider* collider1;
+	Collider* collider2;
 };
 typedef struct Player Player;
 

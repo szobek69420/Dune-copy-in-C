@@ -6,6 +6,7 @@
 #include "GameObjects/game_object.h"
 #include "Renderer/renderer.h"
 #include "Renderer/Window/window.h"
+#include "Physics/physics.h"
 
 #include "Camera/camera.h"
 #include "Glm2/vec3.h"
@@ -32,7 +33,7 @@ void* MAIN_CUM;
 
 int main()
 {
-    //_CrtSetBreakAlloc(411);
+    //_CrtSetBreakAlloc(421);
 
     GLFWwindow* window = init_window("Strobogus", 600, 600);
     glfwSetWindowSizeCallback(window, windowSizeCallback);
@@ -47,6 +48,8 @@ int main()
     camera_setProjection(MAIN_CUM, 10, 10, 0, 10);
     camera_setForward(MAIN_CUM, (Vec3) { 0, 0, -1 });
     renderer_init();
+    physics_init();
+
     renderer_setCamera(MAIN_CUM);
     gameObject_init();
 
@@ -63,6 +66,9 @@ int main()
             printf("Update skipped\n");
             continue;
         }
+
+        physics_step((float)deltaTime);
+
 
         input_update();
         Event e;
@@ -84,6 +90,7 @@ int main()
     glfwTerminate();
 
     gameObject_deinit();
+    physics_deinit();
     renderer_deinit();
     camera_destroy(MAIN_CUM);
 
