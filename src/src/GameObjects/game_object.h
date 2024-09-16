@@ -47,10 +47,14 @@ void gameObject_add(void* gameObject, void* parent);
 //destroys children as well
 void gameObject_destroy(void* gameObject);
 
+void* gameObject_getParent(void* gameObject);//it cannot return the root component
+
 Transform gameObject_createTransform(GameObjects type);
 void gameObject_destroyTransform(Transform* transform);
 Mat4 gameObject_getTransformModel(const Transform* transform);
+Mat4 gameObject_getTransformModelInverse(const Transform* transform);
 Mat4 gameObject_getTransformWorldModel(const Transform* transform);
+Mat4 gameObject_getTransformWorldModelInverse(const Transform* transform);
 
 Vec3 gameObject_getWorldPosition(void* gameObject);
 void gameObject_setWorldPosition(void* gameObject, Vec3 position);

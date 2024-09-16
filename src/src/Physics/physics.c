@@ -79,7 +79,12 @@ void physics_step(float deltaTime)
 
 	//add velocity to position
 	for (int i = 0; i < LENGTH; i++)
+	{
+		if (seqtor_at(REGISTERED_COLLIDERS, i)->isMovable == 0)
+			continue;
+
 		seqtor_at(REGISTERED_COLLIDERS, i)->position = vec3_sum(seqtor_at(REGISTERED_COLLIDERS, i)->position, vec3_scale(seqtor_at(REGISTERED_COLLIDERS, i)->velocity, DELTA_TIME));
+	}
 
 
 	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);

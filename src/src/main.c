@@ -56,6 +56,10 @@ int main()
     input_init();
     eventQueue_init();
 
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
     double frameStart = 0;
     while (glfwWindowShouldClose(window) == 0&&input_isKeyPressed(GLFW_KEY_ESCAPE)==0)
     {
@@ -77,7 +81,7 @@ int main()
 
         gameObject_update((float)deltaTime);
 
-        glClearColor(1, 0, 0, 1);
+        glClearColor(0, 1, 1, 1);
         glClearDepth(1);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -108,7 +112,7 @@ GLFWwindow* init_window(const char* name, int width, int height)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_SAMPLES, 4);//multisample
 
     GLFWwindow* window = glfwCreateWindow(width, height, name, NULL, NULL);
     if (window == NULL)//check if glfw is kaputt

@@ -177,6 +177,44 @@ void gameObject_destroy(void* gameObject)
 		free(p);
 		break;
 	}
+
+
+	if (gameObject != root)
+	{
+		void* parent = gameObject_getParent(gameObject);
+		if (parent == NULL)//meg lehet a root gyereke
+			parent = root;
+		seqtor_remove(((RootObject*)parent)->transform.children, gameObject);
+	}
+}
+
+void* getParentHelper(void* currentGameObject,void* searched)
+{
+	if (currentGameObject == searched)
+		return NULL;
+
+	RootObject* go = currentGameObject;
+	for (int i = 0; i < seqtor_size(go->transform.children); i++)
+	{
+		if (seqtor_at(go->transform.children, i) == searched)
+			return currentGameObject;
+	}
+
+	for (int i = 0; i < seqtor_size(go->transform.children); i++)
+	{
+		void* temp = getParentHelper(seqtor_at(go->transform.children, i), searched);
+		if (temp != NULL)
+			return temp;
+	}
+
+	return NULL;
+}
+void* gameObject_getParent(void* gameObject)
+{
+	void* parent = getParentHelper(root, gameObject);
+	if (parent == root)
+		return NULL;
+	return parent;
 }
 
 Transform gameObject_createTransform(GameObjects type)
@@ -207,6 +245,13 @@ Mat4 gameObject_getTransformModel(const Transform* transform)
 	return model;
 }
 
+Mat4 gameObject_getTransformModelInverse(const Transform* transform)
+{
+	Mat4 inverse = quat_rotationMatrix((Quat) { transform->rotation.s, -transform->rotation.x, -transform->rotation.y, -transform->rotation.z });
+	inverse = mat4_translate(inverse, (Vec3) { -transform->position.x, -transform->position.y, -transform->position.z });
+	return inverse;
+}
+
 Mat4 gameObject_getTransformWorldModel(const Transform* transform)
 {
 	Mat4 model = mat4_create(1);
@@ -216,6 +261,17 @@ Mat4 gameObject_getTransformWorldModel(const Transform* transform)
 	} while (transform != NULL);
 
 	return model;
+}
+
+Mat4 gameObject_getTransformWorldModelInverse(const Transform* transform)
+{
+	Mat4 inverse = mat4_create(1);
+	do {
+		inverse = mat4_multiply(inverse, gameObject_getTransformModelInverse(transform));
+		transform = transform->parent;
+	} while (transform != NULL);
+
+	return inverse;
 }
 
 
@@ -231,7 +287,7 @@ Vec3 gameObject_getWorldPosition(void* gameObject)
 
 void gameObject_setWorldPosition(void* gameObject, Vec3 position)
 {
-	Mat4 modelInverse = mat4_inverse(gameObject_getTransformWorldModel((const Transform*)&(((RootObject*)gameObject)->transform)));
+	Mat4 modelInverse = gameObject_getTransformWorldModelInverse((const Transform*)&(((RootObject*)gameObject)->transform));
 	Vec4 temp = vec4_multiplyWithMatrix(modelInverse, (Vec4) { position.x, position.y, position.z, 1 });
 	((RootObject*)gameObject)->transform.position = *(Vec3*)&temp;
 }

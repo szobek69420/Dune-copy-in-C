@@ -34,7 +34,7 @@ const float vertices[] = {
 };
 
 const float vertices2[] = {
-	0.2f,0,0,0.6f,0.5f,
+	0,0,0,0.5f,0.5f,
 	1,-1,0,1,0,
 	-1,-1,0,0,0,
 	-1,1,0,0,1,
@@ -59,9 +59,9 @@ void* player_create()
 
 	Vec3 helper;
 	player->collider1 = physics_createBallCollider();
-	helper = (Vec3){ 4,0,0 };
+	helper = (Vec3){ 0,0,0 };
 	physics_setColliderParam(player->collider1, POSITION_VEC3, &helper);
-	helper = (Vec3){ -1,0,0 };
+	helper = (Vec3){ 0,0,0 };
 	physics_setColliderParam(player->collider1, VELOCITY_VEC3, &helper);
 	float radious = 0.5f;
 	physics_setColliderParam(player->collider1, RADIUS_FLOAT, &radious);
@@ -72,6 +72,8 @@ void* player_create()
 	physics_setColliderParam(player->collider2, POSITION_VEC3, &helper);
 	helper = (Vec3){ 3,0,0 };
 	physics_setColliderParam(player->collider2, VELOCITY_VEC3, &helper);
+	int isMovable = 1;
+	physics_setColliderParam(player->collider1, MOVABLE_INT, &isMovable);
 
 	return player;
 }
