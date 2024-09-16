@@ -1,12 +1,19 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "renderer.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <seqtor.h>
 #include "Shader/shader.h"
 
 struct ShaderInfo {
 	shader_id id;//used by the outside world
 	shader_t glId;//given by opengl
+	char* vs;
+	char* fs;
+	char* gs;
+	int referenceCount;
 };
 typedef struct ShaderInfo ShaderInfo;
 
@@ -29,8 +36,8 @@ void renderer_init()
 
 void renderer_deinit()
 {
-	for (int i = 0; i < seqtor_size(registeredShaders); i++)
-		shader_delete(seqtor_at(registeredShaders, i).glId);
+	for (int i = seqtor_size(registeredShaders); i >= 0; i--)
+		renderer_destroyShader(seqtor_at(registeredShaders, i).id);
 	seqtor_destroy(registeredShaders);
 
 	textureHandler_deinit();
@@ -38,11 +45,81 @@ void renderer_deinit()
 
 shader_id renderer_createShader(const char* vs, const char* fs, const char* gs)//gives back the id with which the shader can be accessed
 {
+	for (int i = 0; i < seqtor_size(registeredShaders); i++)
+	{
+		ShaderInfo* psi = &seqtor_at(registeredShaders, i);
+
+		if (strcmp(vs, psi->vs) != 0)
+			continue;
+		if (strcmp(fs, psi->fs) != 0)
+			continue;
+		if (gs != NULL && psi->gs == NULL|| gs == NULL && psi->gs != NULL)
+			continue;
+		if(gs!=NULL&&strcmp(psi->gs,gs)!=0)
+			continue;
+
+		return psi->id;
+	}
+
 	ShaderInfo si;
 	si.glId = shader_import(vs, fs, gs);
 	si.id = currentShaderId++;
+
+	si.referenceCount = 1;
+
+	if (vs != NULL)
+	{
+		si.vs = malloc(sizeof(char) * (strlen(vs) + 1));
+		strcpy(si.vs, vs);
+	}
+	else
+		si.vs = NULL;
+
+	if (fs != NULL)
+	{
+		si.fs = malloc(sizeof(char) * (strlen(fs) + 1));
+		strcpy(si.fs, fs);
+	}
+	else
+		si.fs = NULL;
+
+	if (gs != NULL)
+	{
+		si.gs = malloc(sizeof(char) * (strlen(gs) + 1));
+		strcpy(si.gs, gs);
+	}
+	else
+		si.gs = NULL;
+
+
 	seqtor_push_back(registeredShaders, si);
 	return si.id;
+}
+
+void renderer_destroyShader(shader_id shader)
+{
+	int index = -1;
+	for (int i = 0; i < seqtor_size(registeredShaders); i++)
+	{
+#define _s seqtor_at(registeredShaders, i)
+		if (_s.id == shader)
+		{
+			if (0 == --_s.referenceCount)
+			{
+				free(_s.vs);
+				free(_s.fs);
+				if (_s.gs != NULL)
+					free(_s.gs);
+
+				shader_delete(_s.glId);
+				
+				seqtor_remove_at(registeredShaders, i);
+			}
+			
+			break;
+		}
+#undef _s
+	}
 }
 
 void renderer_useShader(shader_id shader)

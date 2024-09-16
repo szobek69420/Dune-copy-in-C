@@ -1,9 +1,6 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "../game_object.h"
-#include "../../Physics/physics.h"
-#include "../../Renderer/renderer.h"
 #include "../../Glm2/mat4.h"
 
 void* player_create();

@@ -2,6 +2,10 @@
 
 #include <stdlib.h>
 
+
+#include "../game_object.h"
+#include "../../Physics/physics.h"
+#include "../../Renderer/renderer.h"
 #include "../../Renderer/Window/window.h"
 #include "../../Camera/camera.h"
 
