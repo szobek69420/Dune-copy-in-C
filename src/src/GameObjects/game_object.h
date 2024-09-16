@@ -13,6 +13,7 @@
 * */
 
 struct Transform {
+	char* name;
 	uint32_t id;
 	uint32_t type;
 	seqtor_of(void*) children;
@@ -40,16 +41,19 @@ void gameObject_render(void* pwindow);
 void gameObject_init();
 void gameObject_deinit();
 
-void* gameObject_create(GameObjects type);
+void* gameObject_create(GameObjects type,const char* name);
 
 //if parent is NULL, then it goes under the root component
 void gameObject_add(void* gameObject, void* parent);
 //destroys children as well
 void gameObject_destroy(void* gameObject);
 
-void* gameObject_getParent(void* gameObject);//it cannot return the root component
+void* gameObject_getByName(const char* name);
 
-Transform gameObject_createTransform(GameObjects type);
+void* gameObject_getParent(void* gameObject);//it cannot return the root component
+void gameObject_setParent(void* gameObject, void* parent);
+
+Transform gameObject_createTransform(GameObjects type, const char* name);
 void gameObject_destroyTransform(Transform* transform);
 Mat4 gameObject_getTransformModel(const Transform* transform);
 Mat4 gameObject_getTransformModelInverse(const Transform* transform);

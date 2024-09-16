@@ -140,6 +140,7 @@
     <ClCompile Include="Camera\camera.c" />
     <ClCompile Include="GameObjects\game_object.c" />
     <ClCompile Include="GameObjects\Player\player.c" />
+    <ClCompile Include="GameObjects\Track\track_handler.c" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Glm2\mat3.c" />
     <ClCompile Include="Glm2\mat4.c" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Camera\camera.h" />
     <ClInclude Include="GameObjects\game_object.h" />
     <ClInclude Include="GameObjects\Player\player.h" />
+    <ClInclude Include="GameObjects\Track\track_handler.h" />
     <ClInclude Include="Glm2\mat3.h" />
     <ClInclude Include="Glm2\mat4.h" />
     <ClInclude Include="Glm2\quaternion.h" />

@@ -7,6 +7,15 @@
 
 #include "../../Glm2/mat4.h"
 
+struct Player {
+	Transform transform;
+	Renderable renderable1;
+	Renderable renderable2;
+	Collider* collider1;
+	Collider* collider2;
+};
+typedef struct Player Player;
+
 
 const float vertices[] = {
 	0,0,0,0.5f,0.5f,

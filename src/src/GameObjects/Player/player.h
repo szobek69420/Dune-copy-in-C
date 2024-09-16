@@ -6,15 +6,6 @@
 #include "../../Renderer/renderer.h"
 #include "../../Glm2/mat4.h"
 
-struct Player {
-	Transform transform;
-	Renderable renderable1;
-	Renderable renderable2;
-	Collider* collider1;
-	Collider* collider2;
-};
-typedef struct Player Player;
-
 void* player_create();
 void player_destroy(void* player);
 

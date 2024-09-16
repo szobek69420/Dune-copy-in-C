@@ -1,5 +1,8 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <seqtor.h>
 #include <stdint.h>
+#include <string.h>
 #include "game_object.h"
 #include "Player/player.h"
 
@@ -110,11 +113,11 @@ void _renderHelper(void* gameObject, Mat4 parentModel)
 void gameObject_init()
 {
 	root = (RootObject*)malloc(sizeof(RootObject));
-	root->transform = gameObject_createTransform(-1);
+	root->transform = gameObject_createTransform(-1,"root");
 	root->transform.isInitialized = 69;
 
 	void* player = NULL;
-	player = gameObject_create(PLAYER);
+	player = gameObject_create(PLAYER,"player");
 	gameObject_add(player, NULL);
 }
 
@@ -123,14 +126,14 @@ void gameObject_deinit()
 	gameObject_destroy(root);
 }
 
-void* gameObject_create(GameObjects type)
+void* gameObject_create(GameObjects type,const char* name)
 {
 	RootObject* gameObject = NULL;
 	switch (type)
 	{
 	case PLAYER:
 		gameObject=player_create();
-		gameObject->transform=gameObject_createTransform(type);
+		gameObject->transform=gameObject_createTransform(type, name);
 		break;
 
 	case TRACK_HANDLER:
@@ -159,7 +162,11 @@ void gameObject_add(void* gameObject, void* parent)
 void gameObject_destroy(void* gameObject)
 {
 	RootObject* p = (RootObject*)gameObject;
-	for (int i = 0; i < seqtor_size(p->transform.children); i++)
+
+	gameObject_onDestroy(gameObject);//azert van ez a rekurziv hivas elott, mert azt akarom, hogy a szulo onDestroy-a elobb fusson le, mint a gyerekeie
+
+
+	for (int i = 0; i < seqtor_size(p->transform.children); i++)//a gyerekek destroyat elobb akarom meghivni, mint a szuloet
 		gameObject_destroy(seqtor_at(p->transform.children, i));
 
 	switch (p->transform.type)
@@ -186,6 +193,30 @@ void gameObject_destroy(void* gameObject)
 			parent = root;
 		seqtor_remove(((RootObject*)parent)->transform.children, gameObject);
 	}
+}
+
+void* getByNameHelper(void* gameObject, const char* name)
+{
+	RootObject* go = gameObject;
+
+	if (strcmp(name, go->transform.name) == 0)
+		return go;
+
+	for (int i = 0; i < seqtor_size(go->transform.children); i++)
+	{
+		void* temp = getByNameHelper(seqtor_at(go->transform.children, i), name);
+		if (temp != NULL)
+			return temp;
+	}
+
+	return NULL;
+}
+void* gameObject_getByName(const char* name)
+{
+	if (name == NULL || strcmp(name, "root") == 0)
+		return NULL;
+
+	return getByNameHelper(root, name);
 }
 
 void* getParentHelper(void* currentGameObject,void* searched)
@@ -217,7 +248,26 @@ void* gameObject_getParent(void* gameObject)
 	return parent;
 }
 
-Transform gameObject_createTransform(GameObjects type)
+void gameObject_setParent(void* gameObject, void* parent)
+{
+	if (gameObject == parent)
+	{
+		printf("Parent cannot be the object itself\n");
+		return;
+	}
+
+	//kiszedni a korabbi szulotol
+	RootObject* prevParent = gameObject_getParent(gameObject);
+	if (prevParent == NULL)
+		prevParent = root;
+	seqtor_remove(prevParent->transform.children, gameObject);
+
+	//hozzaadni az uj szulohoz
+	seqtor_push_back(((RootObject*)parent)->transform.children, gameObject);
+	((RootObject*)gameObject)->transform.parent = &((RootObject*)parent)->transform;
+}
+
+Transform gameObject_createTransform(GameObjects type, const char* name)
 {
 	Transform transform;
 	transform.position = (Vec3){ 0,0,0 };
@@ -229,11 +279,26 @@ Transform gameObject_createTransform(GameObjects type)
 	transform.type = type;
 
 	transform.parent = NULL;
+
+	if (name != NULL)
+	{
+		transform.name = malloc((strlen(name) + 1) * sizeof(char));
+		strcpy(transform.name, name);
+	}
+	else
+	{
+		char buffer[25];
+		sprintf(buffer, "gameobject #%d", transform.id);
+		transform.name = malloc((strlen(buffer) + 1) * sizeof(char));
+		strcpy(transform.name, buffer);
+	}
+
 	return transform;
 }
 
 void gameObject_destroyTransform(Transform* transform)
 {
+	free(transform->name);
 	seqtor_destroy(transform->children);
 }
 
