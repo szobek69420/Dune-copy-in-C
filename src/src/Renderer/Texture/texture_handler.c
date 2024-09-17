@@ -31,8 +31,12 @@ void textureHandler_init()
 
 void textureHandler_deinit()
 {
-    for (int i = 0; i < seqtor_size(loadedTextures); i++)
-        glDeleteTextures(1,&(seqtor_at(loadedTextures,i)));
+    for (int i = seqtor_size(loadedTextures) - 1; i >= 0; i--)
+    {
+        seqtor_at(loadedTextures, i).referenceCount = 1;
+        textureHandler_deleteImage(seqtor_at(loadedTextures, i).id);
+    }
+        
     seqtor_destroy(loadedTextures, 1);
 }
 

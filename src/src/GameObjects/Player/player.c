@@ -63,10 +63,10 @@ void* player_create()
 {
 	Player* player = (Player*)malloc(sizeof(Player));
 
-	player->renderable1 = renderer_createRenderable(vertices, 110, NULL, 0);
+	player->renderable1 = renderer_createRenderable(vertices, 110, NULL, 22);
 	player->renderable1.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
-	player->renderable2 = renderer_createRenderable(vertices2, 25, NULL, 0);
+	player->renderable2 = renderer_createRenderable(vertices2, 25, NULL, 5);
 	player->renderable2.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
 
@@ -94,7 +94,6 @@ void* player_create()
 void player_destroy(void* _player)//releases resources
 {
 	Player* player = _player;
-	gameObject_destroyTransform(&(player->transform));
 	renderer_destroyRenderable(player->renderable1);
 	renderer_destroyRenderable(player->renderable2);
 	physics_destroyCollider(player->collider1);
@@ -141,16 +140,17 @@ void checkForScreenResize()
 
 
 
-void player_render(void* player, Mat4 parentModel)
+void player_render(void* player)
 {
 	Vec3 pos;
+	Mat4 model = gameObject_getTransformWorldModel(&((Player*)player)->transform);
 
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
 	physics_getColliderParam(((Player*)player)->collider1, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable1, mat4_multiply(parentModel, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 0.5f, 0.5f, 1 })));
+	renderer_renderObject(((Player*)player)->renderable1, mat4_multiply(model, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 0.5f, 0.5f, 1 })));
 
 	physics_getColliderParam(((Player*)player)->collider2, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable2, mat4_multiply(parentModel, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 1, 1, 1 })));
+	renderer_renderObject(((Player*)player)->renderable2, mat4_multiply(model, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 1, 1, 1 })));
 }

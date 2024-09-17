@@ -33,7 +33,7 @@ void* MAIN_CUM;
 
 int main()
 {
-    //_CrtSetBreakAlloc(421);
+    //_CrtSetBreakAlloc(443);
 
     GLFWwindow* window = init_window("Strobogus", 600, 600);
     glfwSetWindowSizeCallback(window, windowSizeCallback);

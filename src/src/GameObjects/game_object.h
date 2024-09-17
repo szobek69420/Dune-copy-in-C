@@ -30,8 +30,6 @@ enum GameObjects{
 };
 typedef enum GameObjects GameObjects;
 
-int gameObject_getNextId();
-
 void gameObject_update(float deltaTime);
 void gameObject_onStart(void* gameObject);
 void gameObject_onDestroy(void* gameObject);
@@ -52,6 +50,8 @@ void* gameObject_getByName(const char* name);
 
 void* gameObject_getParent(void* gameObject);//it cannot return the root component
 void gameObject_setParent(void* gameObject, void* parent);
+
+int gameObject_getType(void* gameObject);
 
 Transform gameObject_createTransform(GameObjects type, const char* name);
 void gameObject_destroyTransform(Transform* transform);

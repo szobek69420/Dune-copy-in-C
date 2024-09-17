@@ -5,6 +5,7 @@
 #include <string.h>
 #include "game_object.h"
 #include "Player/player.h"
+#include "Track/track_handler.h"
 
 #define RAD2DEG 57.2957795f
 
@@ -17,10 +18,6 @@ typedef struct RootObject {
 
 RootObject* root;
 
-int gameObject_getType(void* go)
-{
-	return ((RootObject*)go)->transform.type;
-}
 
 void _updateHelper(void* gameObject, float deltaTime);
 void gameObject_update(float deltaTime)
@@ -38,7 +35,7 @@ void gameObject_onStart(void* gameObject)
 		break;
 
 	case TRACK_HANDLER:
-
+		trackHandler_onStart(gameObject);
 		break;
 	}
 
@@ -53,7 +50,7 @@ void gameObject_onDestroy(void* gameObject)
 		break;
 
 	case TRACK_HANDLER:
-
+		trackHandler_onDestroy(gameObject);
 		break;
 	}
 }
@@ -74,7 +71,7 @@ void _updateHelper(void* gameObject, float deltaTime)
 		break;
 
 	case TRACK_HANDLER:
-
+		trackHandler_update(gameObject, deltaTime);
 		break;
 	}
 
@@ -82,32 +79,30 @@ void _updateHelper(void* gameObject, float deltaTime)
 		_updateHelper(seqtor_at(p->transform.children, i), deltaTime);
 }
 
-void _renderHelper(void* gameObject, Mat4 parentModel);
+void _renderHelper(void* gameObject);
 void gameObject_render(void* pwindow)
 {
 	for (int i = 0; i < seqtor_size(root->transform.children); i++)
-		_renderHelper(seqtor_at(root->transform.children, i), mat4_create(1));
+		_renderHelper(seqtor_at(root->transform.children, i));
 }
 
-void _renderHelper(void* gameObject, Mat4 parentModel)
+void _renderHelper(void* gameObject)
 {
 	RootObject* p = (RootObject*)gameObject;
 
 	switch (p->transform.type)
 	{
 	case PLAYER:
-		player_render(gameObject,parentModel);
+		player_render(gameObject);
 		break;
 
 	case TRACK_HANDLER:
-
+		trackHandler_render(gameObject);
 		break;
 	}
 
-	Mat4 model = mat4_multiply(parentModel, gameObject_getTransformModel(&(p->transform)));
-
 	for (int i = 0; i < seqtor_size(p->transform.children); i++)
-		_renderHelper(seqtor_at(p->transform.children, i),model);
+		_renderHelper(seqtor_at(p->transform.children, i));
 }
 
 void gameObject_init()
@@ -117,8 +112,12 @@ void gameObject_init()
 	root->transform.isInitialized = 69;
 
 	void* player = NULL;
-	player = gameObject_create(PLAYER,"player");
+	player = gameObject_create(PLAYER, "player");
 	gameObject_add(player, NULL);
+
+	void* trackHandler = NULL;
+	trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
+	gameObject_add(trackHandler, NULL);
 }
 
 void gameObject_deinit()
@@ -137,7 +136,8 @@ void* gameObject_create(GameObjects type,const char* name)
 		break;
 
 	case TRACK_HANDLER:
-
+		gameObject = trackHandler_create();
+		gameObject->transform = gameObject_createTransform(type, name);
 		break;
 	}
 
@@ -166,17 +166,19 @@ void gameObject_destroy(void* gameObject)
 	gameObject_onDestroy(gameObject);//azert van ez a rekurziv hivas elott, mert azt akarom, hogy a szulo onDestroy-a elobb fusson le, mint a gyerekeie
 
 
-	for (int i = 0; i < seqtor_size(p->transform.children); i++)//a gyerekek destroyat elobb akarom meghivni, mint a szuloet
+	for (int i = seqtor_size(p->transform.children)-1; i >=0; i--)//a gyerekek destroyat elobb akarom meghivni, mint a szuloet
 		gameObject_destroy(seqtor_at(p->transform.children, i));
 
 	switch (p->transform.type)
 	{
 	case PLAYER:
+		gameObject_destroyTransform(&(p->transform));
 		player_destroy(gameObject);
 		break;
 
 	case TRACK_HANDLER:
-
+		gameObject_destroyTransform(&(p->transform));
+		trackHandler_destroy(gameObject);
 		break;
 
 	default:
@@ -267,6 +269,11 @@ void gameObject_setParent(void* gameObject, void* parent)
 	((RootObject*)gameObject)->transform.parent = &((RootObject*)parent)->transform;
 }
 
+int gameObject_getType(void* gameObject)
+{
+	return ((RootObject*)gameObject)->transform.type;
+}
+
 Transform gameObject_createTransform(GameObjects type, const char* name)
 {
 	Transform transform;
@@ -292,7 +299,6 @@ Transform gameObject_createTransform(GameObjects type, const char* name)
 		transform.name = malloc((strlen(buffer) + 1) * sizeof(char));
 		strcpy(transform.name, buffer);
 	}
-
 	return transform;
 }
 

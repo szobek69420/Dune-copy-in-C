@@ -196,7 +196,7 @@ Renderable renderer_createRenderable(const float* vData, unsigned int vCount, co
 	{
 		r.eboUsed = 0;
 		r.ebo = 0;
-		r.count = vCount;
+		r.count = iCount;
 	}
 	else
 	{
@@ -218,8 +218,6 @@ void renderer_destroyRenderable(Renderable renderable)
 	glDeleteBuffers(1, &renderable.vbo);
 	if (renderable.eboUsed)
 		glDeleteBuffers(1, &renderable.ebo);
-
-	textureHandler_deleteImage(renderable.texture);
 }
 
 
@@ -237,6 +235,11 @@ texture_t renderer_createTexture(const char* imagePath, int channels)
 	}
 
 	return textureHandler_loadImage(imagePath, GL_RGBA, GL_RGBA, GL_LINEAR, 69);
+}
+
+void renderer_destroyTexture(texture_t texture)
+{
+	textureHandler_deleteImage(texture);
 }
 
 void renderer_setTexture(Renderable* renderable, texture_t texture)

@@ -10,6 +10,6 @@ void player_update(void* player, float deltaTime);
 void player_onStart(void* player);
 void player_onDestroy(void* player);
 
-void player_render(void* player, struct Mat4 parentModel);
+void player_render(void* player);
 
 #endif

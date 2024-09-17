@@ -8,6 +8,8 @@
 
 #include <glad/glad.h>
 
+#define DEFAULT_SHADER 0
+
 struct Renderable {
 	GLuint vao;
 	GLuint vbo;
@@ -32,10 +34,17 @@ void renderer_renderObject(struct Renderable renderable, struct Mat4 model);
 
 void renderer_setCamera(struct Camera* cum);
 
-Renderable renderer_createRenderable(const float* vData, unsigned int vCount, const unsigned int* iData, unsigned int iCount);//iData should be NULL if no ebo is used
+/*
+vData: the float array of data
+vCount: the number of floats in vData
+iData: the unsigned int array of indices, it is NULL if no ebo is used
+iCount: if iData!=NULL then the number of indices, else the number of vertices
+*/
+Renderable renderer_createRenderable(const float* vData, unsigned int vCount, const unsigned int* iData, unsigned int iCount);
 void renderer_destroyRenderable(Renderable renderable);
 
 texture_t renderer_createTexture(const char* imagePath, int channels);
+void renderer_destroyTexture(texture_t texture);
 void renderer_setTexture(Renderable* renderable, texture_t texture);
 
 #endif
