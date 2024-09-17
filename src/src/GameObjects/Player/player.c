@@ -69,6 +69,7 @@ void* player_create()
 	player->renderable2 = renderer_createRenderable(vertices2, 25, NULL, 5);
 	player->renderable2.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
+	physics_setBouncinessCombine(BC_MULT);
 
 	Vec3 helper;
 	player->collider1 = physics_createBallCollider();
@@ -78,14 +79,16 @@ void* player_create()
 	physics_setColliderParam(player->collider1, VELOCITY_VEC3, &helper);
 	float radious = 0.5f;
 	physics_setColliderParam(player->collider1, RADIUS_FLOAT, &radious);
+	float bounciness = 3.0f;
+	physics_setColliderParam(player->collider1, BOUNCINESS_FLOAT, &bounciness);
 
-	Vec3 points[] = { {1,1,0},{0.2f,0,0} ,{1,-1,0},{-1,-1,0},{-1,1,0},{1,1,0} };
+	Vec3 points[] = { {1,1,0},{0,0,0} ,{1,-1,0},{-1,-1,0},{-1,1,0},{1,1,0} };
 	player->collider2 = physics_createPolygonCollider(points,5);
 	helper = (Vec3){ -10,0.3f,0 };
 	physics_setColliderParam(player->collider2, POSITION_VEC3, &helper);
 	helper = (Vec3){ 3,0,0 };
 	physics_setColliderParam(player->collider2, VELOCITY_VEC3, &helper);
-	int isMovable = 1;
+	int isMovable = 0;
 	physics_setColliderParam(player->collider1, MOVABLE_INT, &isMovable);
 
 	return player;

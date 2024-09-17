@@ -115,9 +115,9 @@ void gameObject_init()
 	player = gameObject_create(PLAYER, "player");
 	gameObject_add(player, NULL);
 
-	void* trackHandler = NULL;
-	trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
-	gameObject_add(trackHandler, NULL);
+	//void* trackHandler = NULL;
+	//trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
+	//gameObject_add(trackHandler, NULL);
 }
 
 void gameObject_deinit()

@@ -11,10 +11,16 @@ enum ColliderType {
 };
 typedef enum ColliderType ColliderType;
 
+enum BouncinessCombine {
+	BC_MIN,BC_MAX,BC_AVG,BC_MULT
+};
+typedef enum BouncinessCombine BouncinessCombine;
+
 enum ColliderParameter {
 	POSITION_VEC3,
 	VELOCITY_VEC3,
 	MOVABLE_INT,
+	BOUNCINESS_FLOAT,
 
 	RADIUS_FLOAT
 };
@@ -42,5 +48,7 @@ void physics_setColliderParam(Collider* collider, ColliderParameter paramType, v
 
 //count is a buffer, in which the number of collisions gets written. THE RETURN VALUE HAS TO BE FREED MANUALLY!!!
 CollisionInfo* physics_getColliderCollisions(Collider* collider, int* count);
+
+void physics_setBouncinessCombine(BouncinessCombine bc);
 
 #endif

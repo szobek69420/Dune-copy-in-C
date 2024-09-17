@@ -8,6 +8,8 @@
 #include "../Glm2/vec4.h"
 #include <seqtor.h>
 
+
+
 struct BoundingBox {
 	Vec4 bounds;//xy: lower.xy, zw: upper.xy
 };
@@ -31,6 +33,7 @@ struct Collider {
 
 	Vec3 position;
 	Vec3 velocity;
+	float bounciness;
 	BoundingBox boundingBox;//local to the collider's space
 
 	seqtor_of(struct CollisionInfo) collisions;//only on movable colliders is this set
@@ -55,6 +58,8 @@ static seqtor_of(Collider*) REGISTERED_COLLIDERS;
 static int CURRENT_ID = 69420;
 
 static float DELTA_TIME = 0;
+
+static BouncinessCombine BOUNCINESS_COMBINE = BC_AVG;
 
 void physics_init()
 {
@@ -127,6 +132,7 @@ Collider* physics_createBallCollider()
 
 	collider->position = vec3_create(0);
 	collider->velocity = vec3_create(0);
+	collider->bounciness = 1;
 	collider->isMovable = 1;
 	collider->ball.radius = 1;
 	physics_calculateBoundingBox(collider);
@@ -149,6 +155,7 @@ Collider* physics_createPolygonCollider(const Vec3* points, int pointCount)
 
 	collider->position = vec3_create(0);
 	collider->velocity = vec3_create(0);
+	collider->bounciness = 1;
 	collider->isMovable = 1;
 
 	seqtor_init(collider->collisions, 1);
@@ -206,6 +213,10 @@ void physics_getColliderParam(Collider* collider, ColliderParameter paramType, v
 			*(int*)pbuffer = collider->isMovable;
 			break;
 
+		case BOUNCINESS_FLOAT:
+			*(float*)pbuffer =collider->bounciness;
+			break;
+
 		case RADIUS_FLOAT:
 			if (collider->type != BALL)
 			{
@@ -233,6 +244,10 @@ void physics_setColliderParam(Collider* collider, ColliderParameter paramType, v
 			collider->isMovable = *(int*)pvalue;
 			break;
 
+		case BOUNCINESS_FLOAT:
+			collider->bounciness = *(float*)pvalue;
+			break;
+
 		case RADIUS_FLOAT:
 			if (collider->type != BALL)
 			{
@@ -254,6 +269,11 @@ CollisionInfo* physics_getColliderCollisions(Collider* collider, int* count)
 	CollisionInfo* collisions = malloc((*count) * sizeof(CollisionInfo));
 	memcpy(collisions, collider->collisions.data, (*count) * sizeof(CollisionInfo));
 	return collisions;
+}
+
+void physics_setBouncinessCombine(BouncinessCombine bc)
+{
+	BOUNCINESS_COMBINE = bc;
 }
 
 
@@ -304,6 +324,25 @@ int physics_stepHelper(const void* c1, const void* c2)
 
 
 //collision detection
+#define calculate_bounciness(COLLIDER1,COLLIDER2,BOUNCINESS_VAL) do { \
+	switch(BOUNCINESS_COMBINE) \
+	{ \
+		case BC_MIN:\
+		(BOUNCINESS_VAL)=min((COLLIDER1)->bounciness,(COLLIDER2)->bounciness); \
+		break; \
+		case BC_MAX:\
+		(BOUNCINESS_VAL)=max((COLLIDER1)->bounciness,(COLLIDER2)->bounciness); \
+		break; \
+		case BC_AVG: \
+		(BOUNCINESS_VAL)=0.5f*((COLLIDER1)->bounciness+(COLLIDER2)->bounciness); \
+		break;\
+		case BC_MULT: \
+		(BOUNCINESS_VAL)=((COLLIDER1)->bounciness*(COLLIDER2)->bounciness); \
+		break;\
+	}\
+} while (0);
+
+
 Vec3 physics_closestPointOfLineSegment(Vec3 point, Vec3 lineA, Vec3 lineB);
 
 int physics_collisionBallBall(Collider* c1, Collider* c2);
@@ -405,6 +444,10 @@ int physics_collisionBallBall(Collider* c1, Collider* c2)//assumes that at least
 	if (distance >= c2->ball.radius + c1->ball.radius)
 		return 0;
 
+
+	float bounciness;
+	calculate_bounciness(c1, c2, bounciness);
+
 	Vec3 distanceNormal = vec3_normalize(distanceVec);
 	Vec3 delta = vec3_scale(distanceNormal, (c2->ball.radius + c1->ball.radius) - distance);
 
@@ -412,7 +455,9 @@ int physics_collisionBallBall(Collider* c1, Collider* c2)//assumes that at least
 	{
 		c2->position = vec3_sum(c2->position, delta);
 		Vec3 prevVelocity = c2->velocity;
-		c2->velocity = vec3_reflect(c2->velocity, distanceNormal);
+		Vec3 fullBounceVelocity = vec3_reflect(c2->velocity, distanceNormal);
+		Vec3 noBounceVelocity = vec3_scale(vec3_sum(prevVelocity, fullBounceVelocity), 0.5f);
+		c2->velocity = vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness);
 
 		CollisionInfo ci;
 		ci.otherCollider = c1;
@@ -432,10 +477,10 @@ int physics_collisionBallBall(Collider* c1, Collider* c2)//assumes that at least
 	Vec3 c2PrevVelocity = c2->velocity;
 
 	c1->velocity = vec3_subtract(c1->velocity, c1Proj);
-	c1->velocity = vec3_sum(c1->velocity, c2Proj);
+	c1->velocity = vec3_sum(c1->velocity, vec3_scale(c2Proj, bounciness));
 
 	c2->velocity = vec3_subtract(c2->velocity, c2Proj);
-	c2->velocity = vec3_sum(c2->velocity, c1Proj);
+	c2->velocity = vec3_sum(c2->velocity, vec3_scale(c1Proj, bounciness));
 
 	c1->position = vec3_sum(c1->position, (Vec3) { -1 * delta.x, -1 * delta.y, -1 * delta.z });
 	c2->position = vec3_sum(c2->position, delta);
@@ -526,11 +571,17 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 		distanceNormal = (Vec3){ -1 * distanceNormal.x,-1 * distanceNormal.y,-1 * distanceNormal.z };
 	}
 
+
+	float bounciness;
+	calculate_bounciness(c1, c2, bounciness);
+
 	if (c1->isMovable == 0)
 	{
 		c2->position = vec3_sum(c2->position, delta);
 		Vec3 prevVelocity = c2->velocity;
-		c2->velocity = vec3_reflect(c2->velocity, distanceNormal);
+		Vec3 fullBounceVelocity = vec3_reflect(c2->velocity, distanceNormal);
+		Vec3 noBounceVelocity = vec3_scale(vec3_sum(prevVelocity, fullBounceVelocity), 0.5f);
+		c2->velocity = vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness);
 
 		CollisionInfo ci;
 		ci.otherCollider = c1;
@@ -550,10 +601,10 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	Vec3 c2PrevVelocity = c2->velocity;
 
 	c1->velocity = vec3_subtract(c1->velocity, c1Proj);
-	c1->velocity = vec3_sum(c1->velocity, c2Proj);
+	c1->velocity = vec3_sum(c1->velocity, vec3_scale(c2Proj, bounciness));
 
 	c2->velocity = vec3_subtract(c2->velocity, c2Proj);
-	c2->velocity = vec3_sum(c2->velocity, c1Proj);
+	c2->velocity = vec3_sum(c2->velocity, vec3_scale(c1Proj, bounciness));
 
 	c1->position = vec3_sum(c1->position, (Vec3) { -1 * delta.x, -1 * delta.y, -1 * delta.z });
 	c2->position = vec3_sum(c2->position, delta);
@@ -592,3 +643,6 @@ Vec3 physics_closestPointOfLineSegment(Vec3 point, Vec3 lineA, Vec3 lineB)
 
 	return projectionToLine;
 }
+
+
+#undef calculate_bounciness(COLLIDER1, COLLIDER2, BOUNCINESS_VAL)
