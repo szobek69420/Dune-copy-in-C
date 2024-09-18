@@ -13,10 +13,8 @@
 
 struct Player {
 	Transform transform;
-	Renderable renderable1;
-	Renderable renderable2;
-	Collider* collider1;
-	Collider* collider2;
+	Renderable renderable;
+	Collider* collider;
 };
 typedef struct Player Player;
 
@@ -63,52 +61,43 @@ void* player_create()
 {
 	Player* player = (Player*)malloc(sizeof(Player));
 
-	player->renderable1 = renderer_createRenderable(vertices, 110, NULL, 22);
-	player->renderable1.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
+	player->renderable = renderer_createRenderable(vertices, 110, NULL, 22);
+	player->renderable.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
-	player->renderable2 = renderer_createRenderable(vertices2, 25, NULL, 5);
-	player->renderable2.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
-
-	physics_setBouncinessCombine(BC_MULT);
 
 	Vec3 helper;
-	player->collider1 = physics_createBallCollider();
-	helper = (Vec3){ 0,0,0 };
-	physics_setColliderParam(player->collider1, POSITION_VEC3, &helper);
-	helper = (Vec3){ 0,0,0 };
-	physics_setColliderParam(player->collider1, VELOCITY_VEC3, &helper);
-	float radious = 0.5f;
-	physics_setColliderParam(player->collider1, RADIUS_FLOAT, &radious);
-	float bounciness = 3.0f;
-	physics_setColliderParam(player->collider1, BOUNCINESS_FLOAT, &bounciness);
-
-	Vec3 points[] = { {1,1,0},{0,0,0} ,{1,-1,0},{-1,-1,0},{-1,1,0},{1,1,0} };
-	player->collider2 = physics_createPolygonCollider(points,5);
-	helper = (Vec3){ -10,0.3f,0 };
-	physics_setColliderParam(player->collider2, POSITION_VEC3, &helper);
-	helper = (Vec3){ 3,0,0 };
-	physics_setColliderParam(player->collider2, VELOCITY_VEC3, &helper);
-	int isMovable = 0;
-	physics_setColliderParam(player->collider1, MOVABLE_INT, &isMovable);
-
+	player->collider = physics_createBallCollider();
+	helper = (Vec3){ 3,40,0 };
+	physics_setColliderParam(player->collider, POSITION_VEC3, &helper);
+	helper = (Vec3){ 0,0.0f,0 };
+	physics_setColliderParam(player->collider, VELOCITY_VEC3, &helper);
+	helper.x = 1;
+	physics_setColliderParam(player->collider, RADIUS_FLOAT, &helper.x);
+	helper.x = 0;
+	physics_setColliderParam(player->collider, BOUNCINESS_FLOAT, &helper.x);
+	
 	return player;
 }
 
 void player_destroy(void* _player)//releases resources
 {
 	Player* player = _player;
-	renderer_destroyRenderable(player->renderable1);
-	renderer_destroyRenderable(player->renderable2);
-	physics_destroyCollider(player->collider1);
-	physics_destroyCollider(player->collider2);
+	renderer_destroyRenderable(player->renderable);
+	physics_destroyCollider(player->collider);
 	free(player);
 }
 
 
 void player_update(void* _player, float deltaTime)
 {
-	//Player* player = (Player*)_player;
-	//player->transform.position.x += deltaTime * 2;
+	Player* player = (Player*)_player;
+	physics_getColliderParam(player->collider, POSITION_VEC3, &player->transform.position);
+
+	//gravity
+	Vec3 velocity;
+	physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+	velocity = vec3_sum(velocity, (Vec3) { 0, -9.80625f * deltaTime, 0 });
+	physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 
 	checkForScreenResize();
 }
@@ -118,6 +107,10 @@ void player_onStart(void* _player)
 	Player* player = (Player*)_player;
 	player->transform.position = (Vec3){ 0,0,0 };
 	player->transform.rotation = (Quat){ 1,0,0,0 };
+
+	physics_setBouncinessCombine(BC_MULT);
+
+	camera_setPosition(MAIN_CUM, (Vec3) { 15, 15, 0 });
 }
 
 void player_onDestroy(void* player)//do something ingame (the destroy() releases the resources)
@@ -135,7 +128,7 @@ void checkForScreenResize()
 	previousWidth = window_width();
 	previousHeight = window_height();
 
-	float projectionHeight = 7;
+	float projectionHeight = 25;
 	float projectionWidth = ((float)previousWidth / previousHeight) * projectionHeight;
 
 	camera_setProjection(MAIN_CUM, projectionWidth, projectionHeight, 0, 10);
@@ -145,15 +138,10 @@ void checkForScreenResize()
 
 void player_render(void* player)
 {
-	Vec3 pos;
 	Mat4 model = gameObject_getTransformWorldModel(&((Player*)player)->transform);
 
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
-	physics_getColliderParam(((Player*)player)->collider1, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable1, mat4_multiply(model, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 0.5f, 0.5f, 1 })));
-
-	physics_getColliderParam(((Player*)player)->collider2, POSITION_VEC3, &pos);
-	renderer_renderObject(((Player*)player)->renderable2, mat4_multiply(model, mat4_scale(mat4_translate(mat4_create(1), pos), (Vec3) { 1, 1, 1 })));
+	renderer_renderObject(((Player*)player)->renderable, model);
 }

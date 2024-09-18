@@ -187,10 +187,7 @@ Renderable renderer_createRenderable(const float* vData, unsigned int vCount, co
 	glGenBuffers(1, &r.vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vCount, vData, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	
 
 	if (iData == NULL)//no ebo is used
 	{
@@ -207,6 +204,11 @@ Renderable renderer_createRenderable(const float* vData, unsigned int vCount, co
 		r.eboUsed = 1;
 		r.count = iCount;
 	}
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 	return r;

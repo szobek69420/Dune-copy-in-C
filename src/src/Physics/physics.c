@@ -64,6 +64,7 @@ static BouncinessCombine BOUNCINESS_COMBINE = BC_AVG;
 void physics_init()
 {
 	seqtor_init(REGISTERED_COLLIDERS, 1);
+	BOUNCINESS_COMBINE = BC_AVG;
 }
 
 void physics_step(float deltaTime)
@@ -87,9 +88,10 @@ void physics_step(float deltaTime)
 	{
 		if (seqtor_at(REGISTERED_COLLIDERS, i)->isMovable == 0)
 			continue;
-
+		
 		seqtor_at(REGISTERED_COLLIDERS, i)->position = vec3_sum(seqtor_at(REGISTERED_COLLIDERS, i)->position, vec3_scale(seqtor_at(REGISTERED_COLLIDERS, i)->velocity, DELTA_TIME));
 	}
+	
 
 
 	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);
@@ -457,7 +459,7 @@ int physics_collisionBallBall(Collider* c1, Collider* c2)//assumes that at least
 		Vec3 prevVelocity = c2->velocity;
 		Vec3 fullBounceVelocity = vec3_reflect(c2->velocity, distanceNormal);
 		Vec3 noBounceVelocity = vec3_scale(vec3_sum(prevVelocity, fullBounceVelocity), 0.5f);
-		c2->velocity = vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness);
+		c2->velocity = vec3_sum(noBounceVelocity, vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness));
 
 		CollisionInfo ci;
 		ci.otherCollider = c1;
@@ -575,20 +577,21 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	float bounciness;
 	calculate_bounciness(c1, c2, bounciness);
 
+
 	if (c1->isMovable == 0)
 	{
 		c2->position = vec3_sum(c2->position, delta);
 		Vec3 prevVelocity = c2->velocity;
 		Vec3 fullBounceVelocity = vec3_reflect(c2->velocity, distanceNormal);
 		Vec3 noBounceVelocity = vec3_scale(vec3_sum(prevVelocity, fullBounceVelocity), 0.5f);
-		c2->velocity = vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness);
+		c2->velocity = vec3_sum(noBounceVelocity,vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness));
 
 		CollisionInfo ci;
 		ci.otherCollider = c1;
 		ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity, prevVelocity), 1.0f / DELTA_TIME);
 
 		seqtor_push_back(c2->collisions, ci);
-
+		
 		return 1;
 	}
 
@@ -606,6 +609,7 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	c2->velocity = vec3_subtract(c2->velocity, c2Proj);
 	c2->velocity = vec3_sum(c2->velocity, vec3_scale(c1Proj, bounciness));
 
+
 	c1->position = vec3_sum(c1->position, (Vec3) { -1 * delta.x, -1 * delta.y, -1 * delta.z });
 	c2->position = vec3_sum(c2->position, delta);
 
@@ -619,7 +623,7 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	ci.otherCollider = c1;
 	ci.collisionForce = vec3_scale(vec3_subtract(c2->velocity, c2PrevVelocity), 1.0f / DELTA_TIME);
 	seqtor_push_back(c2->collisions, ci);
-
+	
 	return 1;
 }
 

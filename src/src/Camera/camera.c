@@ -95,3 +95,9 @@ void camera_setForward(struct Camera* cam, struct Vec3 forward)
     cam->up = vec3_normalize(vec3_cross(cam->right, cam->front));
     cam->view_matrix = mat4_lookAt(cam->position, cam->front, cam->up);
 }
+
+void camera_setPosition(struct Camera* cum, struct Vec3 position)
+{
+    cum->position = position;
+    cum->view_matrix = mat4_lookAt(cum->position, cum->front, cum->up);
+}

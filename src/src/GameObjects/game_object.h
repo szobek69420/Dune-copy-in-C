@@ -47,6 +47,7 @@ void gameObject_add(void* gameObject, void* parent);
 void gameObject_destroy(void* gameObject);
 
 void* gameObject_getByName(const char* name);
+int gameObject_isAlive(void* gameObject);
 
 void* gameObject_getParent(void* gameObject);//it cannot return the root component
 void gameObject_setParent(void* gameObject, void* parent);

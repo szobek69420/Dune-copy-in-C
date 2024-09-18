@@ -33,7 +33,7 @@ void* MAIN_CUM;
 
 int main()
 {
-    //_CrtSetBreakAlloc(443);
+    //_CrtSetBreakAlloc(428);
 
     GLFWwindow* window = init_window("Strobogus", 600, 600);
     glfwSetWindowSizeCallback(window, windowSizeCallback);
@@ -60,6 +60,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
+    int frameCount = 0;
+    double elapsedTime = 0;
     double frameStart = 0;
     while (glfwWindowShouldClose(window) == 0&&input_isKeyPressed(GLFW_KEY_ESCAPE)==0)
     {
@@ -70,6 +72,9 @@ int main()
             printf("Update skipped\n");
             continue;
         }
+
+        elapsedTime += deltaTime;
+        frameCount++;
 
         physics_step((float)deltaTime);
 
@@ -101,6 +106,8 @@ int main()
 #ifdef _CRTDBG_MAP_ALLOC
     _CrtDumpMemoryLeaks();
 #endif
+
+    printf("Average FPS: %.1f\n", frameCount / elapsedTime);
 
     return 0;
 }

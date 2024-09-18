@@ -7,6 +7,7 @@
 #include "Player/player.h"
 #include "Track/track_handler.h"
 
+
 #define RAD2DEG 57.2957795f
 
 static uint32_t currentId = 69;
@@ -17,6 +18,31 @@ typedef struct RootObject {
 } RootObject;
 
 RootObject* root;
+seqtor_of(void*) REGISTERED_GAMEOBJECTS;//root is not part of it
+
+
+void gameObject_init()
+{
+	seqtor_init(REGISTERED_GAMEOBJECTS, 1);
+
+	root = (RootObject*)malloc(sizeof(RootObject));
+	root->transform = gameObject_createTransform(-1, "root");
+	root->transform.isInitialized = 69;
+
+	void* player = NULL;
+	player = gameObject_create(PLAYER, "player");
+	gameObject_add(player, NULL);
+
+	void* trackHandler = NULL;
+	trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
+	gameObject_add(trackHandler, NULL);
+}
+
+void gameObject_deinit()
+{
+	gameObject_destroy(root);
+	seqtor_destroy(REGISTERED_GAMEOBJECTS);
+}
 
 
 void _updateHelper(void* gameObject, float deltaTime);
@@ -105,25 +131,6 @@ void _renderHelper(void* gameObject)
 		_renderHelper(seqtor_at(p->transform.children, i));
 }
 
-void gameObject_init()
-{
-	root = (RootObject*)malloc(sizeof(RootObject));
-	root->transform = gameObject_createTransform(-1,"root");
-	root->transform.isInitialized = 69;
-
-	void* player = NULL;
-	player = gameObject_create(PLAYER, "player");
-	gameObject_add(player, NULL);
-
-	//void* trackHandler = NULL;
-	//trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
-	//gameObject_add(trackHandler, NULL);
-}
-
-void gameObject_deinit()
-{
-	gameObject_destroy(root);
-}
 
 void* gameObject_create(GameObjects type,const char* name)
 {
@@ -146,6 +153,15 @@ void* gameObject_create(GameObjects type,const char* name)
 
 void gameObject_add(void* gameObject, void* parent)
 {
+	for (int i = 0; i < seqtor_size(REGISTERED_GAMEOBJECTS); i++)
+	{
+		if (gameObject == seqtor_at(REGISTERED_GAMEOBJECTS, i))
+		{
+			fprintf(stderr, "you cannot register the same game object twice\n");
+			return;
+		}
+	}
+
 	RootObject* p = (RootObject*)parent;
 	if (p == NULL)
 	{
@@ -157,6 +173,8 @@ void gameObject_add(void* gameObject, void* parent)
 		seqtor_push_back(((RootObject*)parent)->transform.children, gameObject);
 		((RootObject*)gameObject)->transform.parent = &(p->transform);
 	}
+
+	seqtor_push_back(REGISTERED_GAMEOBJECTS, gameObject);
 }
 
 void gameObject_destroy(void* gameObject)
@@ -195,6 +213,8 @@ void gameObject_destroy(void* gameObject)
 			parent = root;
 		seqtor_remove(((RootObject*)parent)->transform.children, gameObject);
 	}
+
+	seqtor_remove(REGISTERED_GAMEOBJECTS, gameObject);
 }
 
 void* getByNameHelper(void* gameObject, const char* name)
@@ -218,7 +238,22 @@ void* gameObject_getByName(const char* name)
 	if (name == NULL || strcmp(name, "root") == 0)
 		return NULL;
 
-	return getByNameHelper(root, name);
+	for (int i = 0; i < seqtor_size(REGISTERED_GAMEOBJECTS); i++)
+	{
+		if (strcmp(((RootObject*)seqtor_at(REGISTERED_GAMEOBJECTS, i))->transform.name, name) == 0)
+			return seqtor_at(REGISTERED_GAMEOBJECTS, i);
+	}
+	return NULL;
+}
+
+int gameObject_isAlive(void* gameObject)
+{
+	for (int i = 0; i < seqtor_size(REGISTERED_GAMEOBJECTS); i++)
+	{
+		if (seqtor_at(REGISTERED_GAMEOBJECTS, i) == gameObject)
+			return 69;
+	}
+	return 0;
 }
 
 void* getParentHelper(void* currentGameObject,void* searched)

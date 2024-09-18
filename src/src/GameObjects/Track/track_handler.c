@@ -1,12 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <math.h>
+
+#include "track_handler.h"
+
 #include "../game_object.h"
 #include "../../Physics/physics.h"
 #include "../../Renderer/renderer.h"
 #include "../../Glm2/mat4.h"
 #include "../../Glm2/vec3.h"
 #include "../../Glm2/quaternion.h"
+
+#define SEGMENT_VERTEX_COUNT (2*(TH_SEGMENT_RESOLUTION*TH_SEGMENT_LENGTH+1))
+#define SEGMENT_INDEX_COUNT (3*(SEGMENT_VERTEX_COUNT-2))
 
 struct TrackSegment;
 typedef struct TrackSegment TrackSegment;
@@ -68,6 +75,8 @@ void trackHandler_onStart(void* trackHandler)
 
 	TrackSegment* tsz = createSegment((Vec3) { 0, 0, 0 });
 	seqtor_push_back(th->segments, tsz);
+	tsz = createSegment((Vec3) { 10, 0, 0 });
+	seqtor_push_back(th->segments, tsz);
 }
 
 void trackHandler_onDestroy(void* trackHandler)
@@ -89,19 +98,77 @@ void trackHandler_render(void* trackHandler)
 }
 
 
+float mapGenerator(float x)
+{
+	return 10.0f + 3 * sinf(0.2f*x+1.1f);
+}
+
 TrackSegment* createSegment(Vec3 position)
 {
 	TrackSegment* tsz = malloc(sizeof(TrackSegment));
 
 	tsz->position = position;
 
-	tsz->renderable = renderer_createRenderable((float[]) { -1, -1, 0, 0, 0, -1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, -1, 0, 1, 0 }, 20, NULL, 4);
+
+	float* vertices = malloc(5*SEGMENT_VERTEX_COUNT * sizeof(float));
+	unsigned int* indices = malloc(SEGMENT_INDEX_COUNT * sizeof(unsigned int));
+
+	float deltaX = 1.0f / TH_SEGMENT_RESOLUTION;
+	float currentX = tsz->position.x;
+
+	float deltaUVX= 1.0f / (TH_SEGMENT_LENGTH*TH_SEGMENT_RESOLUTION);
+	float currentUVX = 0;
+
+	for (int i = 0,j=0,k=0; i <SEGMENT_VERTEX_COUNT/2; i++,j+=5, currentX += deltaX,currentUVX+=deltaUVX)
+	{
+		//vertices
+		vertices[j] = currentX-tsz->position.x;
+		vertices[j + 1] = mapGenerator(currentX);
+		vertices[j + 2] = 0;
+		vertices[j + 3] = currentUVX;
+		vertices[j + 4] = 1.0f;
+
+		j += 5*(SEGMENT_VERTEX_COUNT/2);
+		vertices[j] = currentX- tsz->position.x;
+		vertices[j + 1] = 0;
+		vertices[j + 2] = 0;
+		vertices[j + 3] = currentUVX;
+		vertices[j + 4] = 0;
+
+		j-= 5 * (SEGMENT_VERTEX_COUNT / 2);
+
+		//indices
+		if (i == 0)//first tile starts at i==1
+			continue;
+
+		indices[k++] = i - 1;
+		indices[k++] = i + TH_SEGMENT_RESOLUTION * TH_SEGMENT_LENGTH + 1;
+		indices[k++] = i;
+		indices[k++] = i - 1;
+		indices[k++] = i + TH_SEGMENT_RESOLUTION * TH_SEGMENT_LENGTH;
+		indices[k++] = i + TH_SEGMENT_RESOLUTION * TH_SEGMENT_LENGTH + 1;
+	}
+
+	tsz->renderable = renderer_createRenderable(vertices, 5*SEGMENT_VERTEX_COUNT, indices, SEGMENT_INDEX_COUNT);
 	tsz->renderable.texture = TEXTURE;
 
-	tsz->collider = physics_createPolygonCollider((Vec3[]) { { -1, -1, 0 }, { -1,1,0 }, { 1,1,0 }, { 1,-1,0 }, { -1,-1,0 } }, 5);
+
+	Vec3* colliderPoints = malloc(sizeof(Vec3) * (SEGMENT_VERTEX_COUNT + 1));
+	for (int i = 0,j=0; i < SEGMENT_VERTEX_COUNT / 2; i++,j+=5)
+		colliderPoints[i] = *(Vec3*)(vertices + j);
+	for (int i = 5 * (SEGMENT_VERTEX_COUNT - 1), j = SEGMENT_VERTEX_COUNT / 2; i >= 5 * (SEGMENT_VERTEX_COUNT / 2); i -= 5, j++)
+		colliderPoints[j] = *(Vec3*)(vertices + i);
+	colliderPoints[SEGMENT_VERTEX_COUNT] = *(Vec3*)vertices;
+
+
+	tsz->collider = physics_createPolygonCollider(colliderPoints, SEGMENT_VERTEX_COUNT+1);
 	physics_setColliderParam(tsz->collider, POSITION_VEC3, &position);
-	int isMovable = 69;
+	int isMovable = 0;
 	physics_setColliderParam(tsz->collider, MOVABLE_INT, &isMovable);
+
+	free(vertices);
+	free(indices);
+	free(colliderPoints);
 
 	return tsz;
 }
@@ -116,6 +183,7 @@ void destroySegment(TrackSegment* segment)
 void renderSegment(TrackSegment* segment, Mat4 parentModel)
 {
 	renderer_useShader(DEFAULT_SHADER);
-	renderer_setRenderMode(GL_TRIANGLE_FAN);
+	renderer_setRenderMode(GL_TRIANGLES);
+	
 	renderer_renderObject(segment->renderable, mat4_multiply(parentModel, mat4_translate(mat4_create(1), segment->position)));
 }
