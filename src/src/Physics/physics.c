@@ -52,7 +52,7 @@ int physics_detectCollision(Collider* c1, Collider* c2);//returns -1 if no bound
 
 static Collider* COMPARED_COLLIDER=NULL;
 typedef struct ColliderSortHelper { const Collider* collider; float penetration; } ColliderSortHelper;
-int physics_stepHelper(const void* c1, const void* c2);//ez a fuggveny megnezi, hogy melyik collider van kozelebb a COMPARED_COLLIDER-hez a bounding boxok szerint. mindig a COMPARED_COLLIDER van a legkozelebb
+int physics_stepHelper(const void* csh1, const void* csh2);//ez a fuggveny megnezi, hogy melyik collider van kozelebb a COMPARED_COLLIDER-hez a bounding boxok szerint. mindig a COMPARED_COLLIDER van a legkozelebb
 
 
 static seqtor_of(Collider*) REGISTERED_COLLIDERS;
@@ -94,56 +94,36 @@ void physics_step(float deltaTime)
 	}
 	
 
+	ColliderSortHelper* helpers = malloc(sizeof(ColliderSortHelper) * LENGTH);
+	for (int i = 0; i < LENGTH; i++)
+		helpers[i].collider = seqtor_at(REGISTERED_COLLIDERS, i);
 
-	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);
-	float* penetrations = malloc(sizeof(float) * LENGTH);
-	memcpy(colliders, REGISTERED_COLLIDERS.data, LENGTH * sizeof(Collider*));
 
 	for (int i = 0; i < LENGTH; i++)
 	{
 		int CURRENT_LENGTH = LENGTH - i;
-		float* currentPenetrations = penetrations + i;
-		Collider** currentColliders = colliders + i;
+		ColliderSortHelper* currentHelpers = helpers + i;
 
 		Collider* current = seqtor_at(REGISTERED_COLLIDERS, i);
 		COMPARED_COLLIDER = current;
-		for (int j = 0; j < CURRENT_LENGTH; j++)
-			currentPenetrations[j] = physics_boundingBoxPenetration(current,currentColliders[j]);
 
 		for (int j = 0; j < CURRENT_LENGTH; j++)
-		{
-			for (int k = 0; k < CURRENT_LENGTH - j - 1; k++)
-			{
-				if (currentPenetrations[k] < currentPenetrations[k + 1])
-				{
-					float temp = currentPenetrations[k];
-					currentPenetrations[k] = currentPenetrations[k + 1];
-					currentPenetrations[k + 1] = temp;
+			currentHelpers[j].penetration = physics_boundingBoxPenetration(current, currentHelpers[j].collider);
 
-					Collider* tempc = currentColliders[k];
-					currentColliders[k] = currentColliders[k + 1];
-					currentColliders[k + 1] = tempc;
-				}
-			}
-		}
-		//qsort(colliders, LENGTH, sizeof(Collider*), physics_stepHelper);
+		qsort(currentHelpers, (size_t)CURRENT_LENGTH, sizeof(ColliderSortHelper), physics_stepHelper);//sort to the closest
 
 		for (int j = 0; j < CURRENT_LENGTH; j++)//mert ekkor mar i db collider le lett tudva, amelyek automatikusan a tomb elejere lettek rakva
 		{
-			Collider* otherCurrent = currentColliders[j];
-			if (current == otherCurrent)
-			{
+			if (current == currentHelpers[j].collider)
 				continue;
-			}
 
-			int collision = physics_detectCollision(current, otherCurrent);
+			int collision = physics_detectCollision(current, currentHelpers[j].collider);
 			if (collision == -1)
 				break;
 		}
 	}
 
-	free(colliders);
-	free(penetrations);
+	free(helpers);
 }
 
 void physics_deinit()
@@ -343,10 +323,10 @@ void physics_calculateBoundingBox(Collider* collider)
 }
 
 
-int physics_stepHelper(const void* c1, const void* c2)
+int physics_stepHelper(const void* csh1, const void* csh2)
 {
-	float penetration1 = physics_boundingBoxPenetration(COMPARED_COLLIDER, c1);
-	float penetration2 = physics_boundingBoxPenetration(COMPARED_COLLIDER, c2);
+	float penetration1 = physics_boundingBoxPenetration(COMPARED_COLLIDER, ((ColliderSortHelper*)csh1)->collider);
+	float penetration2 = physics_boundingBoxPenetration(COMPARED_COLLIDER, ((ColliderSortHelper*)csh2)->collider);
 
 	if (penetration2 > penetration1)
 		return 1;
