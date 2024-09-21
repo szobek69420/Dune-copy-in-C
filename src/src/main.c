@@ -67,7 +67,7 @@ int main()
     {
         double deltaTime = glfwGetTime() - frameStart;
         frameStart += deltaTime;
-        if (deltaTime > 0.5f)
+        if (deltaTime > 0.1f)
         {
             printf("Update skipped\n");
             continue;

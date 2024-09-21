@@ -21,7 +21,11 @@ typedef struct TrackSegment TrackSegment;
 struct TrackHandler 
 {
 	Transform transform;
+
 	seqtor_of(TrackSegment*) segments;
+	Vec3 currentSegmentStart;
+
+	void* player;
 };
 typedef struct TrackHandler TrackHandler;
 
@@ -44,6 +48,8 @@ void* trackHandler_create()
 {
 	TrackHandler* trackHandler = malloc(sizeof(TrackHandler));
 	seqtor_init(trackHandler->segments, 1);
+	trackHandler->currentSegmentStart = (Vec3){ 0,0,0 };
+	trackHandler->player = NULL;
 
 	TEXTURE = renderer_createTexture("Assets/Sprites/track.png", 4);
 
@@ -63,7 +69,31 @@ void trackHandler_destroy(void* trackHandler)
 
 void trackHandler_update(void* trackHandler, float deltaTime)
 {
+	TrackHandler* th = trackHandler;
 
+	if (seqtor_size(th->segments) < TH_MAX_SEGMENT_COUNT)
+	{
+		TrackSegment* tsz = createSegment(th->currentSegmentStart);
+		seqtor_push_back(th->segments, tsz);
+		th->currentSegmentStart = vec3_sum(th->currentSegmentStart, (Vec3) { TH_SEGMENT_LENGTH, 0, 0 });
+	}
+	else
+	{
+		if (th->player == NULL)
+			th->player = gameObject_getByName("player");
+		else if (gameObject_isAlive(th->player) == 0)
+			th->player = NULL;
+
+		if (th->player != NULL && th->currentSegmentStart.x - TH_MAX_SEGMENT_COUNT * TH_SEGMENT_LENGTH + 30 < ((TrackHandler*)th->player)->transform.position.x)
+		{
+			destroySegment(seqtor_at(th->segments, 0));
+			seqtor_remove_at(th->segments, 0);
+
+			TrackSegment* tsz = createSegment(th->currentSegmentStart);
+			seqtor_push_back(th->segments, tsz);
+			th->currentSegmentStart = vec3_sum(th->currentSegmentStart, (Vec3) { TH_SEGMENT_LENGTH, 0, 0 });
+		}
+	}
 }
 
 void trackHandler_onStart(void* trackHandler)
@@ -72,11 +102,6 @@ void trackHandler_onStart(void* trackHandler)
 
 	th->transform.position = (Vec3){ 0,0,0 };
 	th->transform.rotation = quat_init();
-
-	TrackSegment* tsz = createSegment((Vec3) { 0, 0, 0 });
-	seqtor_push_back(th->segments, tsz);
-	tsz = createSegment((Vec3) { 10, 0, 0 });
-	seqtor_push_back(th->segments, tsz);
 }
 
 void trackHandler_onDestroy(void* trackHandler)
@@ -100,7 +125,7 @@ void trackHandler_render(void* trackHandler)
 
 float mapGenerator(float x)
 {
-	return 10.0f + 3 * sinf(0.2f*x+1.1f);
+	return 20.0f + 10*sinf(0.09f*x+0.76f)+5 * sinf(0.2f*x+1.1f);
 }
 
 TrackSegment* createSegment(Vec3 position)

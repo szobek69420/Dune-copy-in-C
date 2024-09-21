@@ -51,7 +51,8 @@ float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2);
 int physics_detectCollision(Collider* c1, Collider* c2);//returns -1 if no bounding box contact, 0 if no collision, 1 if collision
 
 static Collider* COMPARED_COLLIDER=NULL;
-int physics_stepHelper(const void* c1, const void* c2);//ez a fuggveny megnezi, hogy melyik collider van kozelebb a COMPARED_COLLIDER-hez a bounding boxok szerint
+typedef struct ColliderSortHelper { const Collider* collider; float penetration; } ColliderSortHelper;
+int physics_stepHelper(const void* c1, const void* c2);//ez a fuggveny megnezi, hogy melyik collider van kozelebb a COMPARED_COLLIDER-hez a bounding boxok szerint. mindig a COMPARED_COLLIDER van a legkozelebb
 
 
 static seqtor_of(Collider*) REGISTERED_COLLIDERS;
@@ -95,19 +96,45 @@ void physics_step(float deltaTime)
 
 
 	Collider** colliders = malloc(sizeof(Collider*) * LENGTH);
+	float* penetrations = malloc(sizeof(float) * LENGTH);
 	memcpy(colliders, REGISTERED_COLLIDERS.data, LENGTH * sizeof(Collider*));
 
 	for (int i = 0; i < LENGTH; i++)
 	{
+		int CURRENT_LENGTH = LENGTH - i;
+		float* currentPenetrations = penetrations + i;
+		Collider** currentColliders = colliders + i;
+
 		Collider* current = seqtor_at(REGISTERED_COLLIDERS, i);
 		COMPARED_COLLIDER = current;
-		qsort(colliders, LENGTH, sizeof(Collider*), physics_stepHelper);
+		for (int j = 0; j < CURRENT_LENGTH; j++)
+			currentPenetrations[j] = physics_boundingBoxPenetration(current,currentColliders[j]);
 
-		for (int j = 0; j < LENGTH; j++)
+		for (int j = 0; j < CURRENT_LENGTH; j++)
 		{
-			Collider* otherCurrent = colliders[j];
+			for (int k = 0; k < CURRENT_LENGTH - j - 1; k++)
+			{
+				if (currentPenetrations[k] < currentPenetrations[k + 1])
+				{
+					float temp = currentPenetrations[k];
+					currentPenetrations[k] = currentPenetrations[k + 1];
+					currentPenetrations[k + 1] = temp;
+
+					Collider* tempc = currentColliders[k];
+					currentColliders[k] = currentColliders[k + 1];
+					currentColliders[k + 1] = tempc;
+				}
+			}
+		}
+		//qsort(colliders, LENGTH, sizeof(Collider*), physics_stepHelper);
+
+		for (int j = 0; j < CURRENT_LENGTH; j++)//mert ekkor mar i db collider le lett tudva, amelyek automatikusan a tomb elejere lettek rakva
+		{
+			Collider* otherCurrent = currentColliders[j];
 			if (current == otherCurrent)
+			{
 				continue;
+			}
 
 			int collision = physics_detectCollision(current, otherCurrent);
 			if (collision == -1)
@@ -116,6 +143,7 @@ void physics_step(float deltaTime)
 	}
 
 	free(colliders);
+	free(penetrations);
 }
 
 void physics_deinit()
@@ -310,16 +338,19 @@ void physics_calculateBoundingBox(Collider* collider)
 		}
 		break;
 	}
+
+	collider->boundingBox.bounds = vec4_sum(collider->boundingBox.bounds, (Vec4) { -1, -1, 1, 1 });//kicsit nagyobb legyen a bounding box, mint az alakzat
 }
 
 
 int physics_stepHelper(const void* c1, const void* c2)
 {
-	float szam = physics_boundingBoxPenetration(COMPARED_COLLIDER, c2) - physics_boundingBoxPenetration(COMPARED_COLLIDER, c1);
-	
-	if (szam > 0)
+	float penetration1 = physics_boundingBoxPenetration(COMPARED_COLLIDER, c1);
+	float penetration2 = physics_boundingBoxPenetration(COMPARED_COLLIDER, c2);
+
+	if (penetration2 > penetration1)
 		return 1;
-	if (szam == 0)
+	if (penetration2 == penetration1)
 		return 0;
 	return -1;
 }
@@ -395,12 +426,18 @@ int physics_detectCollision(Collider* c1, Collider* c2)//returns -1 if no boundi
 
 float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2)//negative value means no penetration
 {
+	if (c1 == c2)
+		return FLT_MAX;
+
 	Vec4 c1bb = c1->boundingBox.bounds;
 	c1bb = (Vec4){ c1bb.x + c1->position.x,c1bb.y + c1->position.y,c1bb.z + c1->position.x, c1bb.w + c1->position.y };
 	Vec4 c2bb = c2->boundingBox.bounds;
 	c2bb = (Vec4){ c2bb.x + c2->position.x,c2bb.y + c2->position.y,c2bb.z + c2->position.x, c2bb.w + c2->position.y };
 
 	float penetration = FLT_MAX;
+
+	if (c1bb.x >= c2bb.z || c1bb.z <= c2bb.x || c1bb.y >= c2bb.w || c1bb.w <= c2bb.y)//no penetration
+		goto NoPenetration;
 
 	if (c1bb.x > c2bb.x && c1bb.x < c2bb.z)
 	{
@@ -424,8 +461,30 @@ float physics_boundingBoxPenetration(const Collider* c1, const Collider* c2)//ne
 			penetration = c1bb.w - c2bb.y;
 	}
 
+NoPenetration:
 	if (penetration == FLT_MAX)
-		penetration = -69;
+	{
+		penetration = 0;
+		float temp;
+		
+		temp = c1bb.x - c2bb.z;
+		if (temp > penetration)
+			penetration = temp;
+
+		temp = c2bb.x - c1bb.z;
+		if (temp > penetration)
+			penetration = temp;
+
+		temp = c1bb.y - c2bb.w;
+		if (temp > penetration)
+			penetration = temp;
+
+		temp = c2bb.y - c1bb.w;
+		if (temp > penetration)
+			penetration = temp;
+
+		penetration *= -1;
+	}
 
 	return penetration;
 }
@@ -510,20 +569,22 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 {
 	Vec3 resolutionDir = (Vec3){ 0,0,0 };
 	float resolutionLength = FLT_MAX;
+	int resolutionIndex = -1;
 
-	Vec3 colliderPos = polygon->position;
+	Vec3 polygonPos = polygon->position;
+	Vec3 ballPos = ball->position;
 	Vec3* points = malloc(sizeof(Vec3) * polygon->polygon.pointCount);
 	memcpy(points, polygon->polygon.points, sizeof(Vec3) * polygon->polygon.pointCount);
-	points[0] = (Vec3){ points[0].x + colliderPos.x,points[0].y + colliderPos.y,points[0].z + colliderPos.z };
+	points[0] = vec3_sum(points[0], polygonPos);
 
 
 	for (int i = 0; i < polygon->polygon.pointCount - 1; i++)
 	{
-		points[i+1] = (Vec3){ points[i+1].x + colliderPos.x,points[i+1].y + colliderPos.y,points[i+1].z + colliderPos.z };
+		points[i+1] = vec3_sum(points[i+1],polygonPos);
 
 		Vec3 delta = vec3_subtract(
-			ball->position,
-			physics_closestPointOfLineSegment(ball->position, points[i], points[i + 1])
+			ballPos,
+			physics_closestPointOfLineSegment(ballPos, points[i], points[i + 1])
 		);
 
 		float deltaLength = vec3_magnitude(delta);
@@ -536,9 +597,9 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 		if (vec3_dot(
 			delta,
 			(Vec3) {-(points[i + 1].y - points[i].y), points[i + 1].x - points[i].x, 0}
-		)<0)
+		)<0.0001f)
 		{
-			resolution = vec3_scale(vec3_normalize(delta), -vec3_magnitude(delta) - ball->ball.radius);
+			resolution = vec3_scale(vec3_normalize(delta), -deltaLength - ball->ball.radius);
 		}
 		else //ha nem
 		{
@@ -548,10 +609,21 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 
 		if (resolutionLength > vec3_magnitude(resolution))
 		{
+			resolutionIndex = i;
 			resolutionDir = resolution;
 			resolutionLength = vec3_magnitude(resolution);
 		}
 	}
+
+	/*if (resolutionLength != FLT_MAX && resolutionLength > 0.05f)
+	{
+		vec3_print(&ball->velocity);
+		vec3_print(&resolutionDir);
+		vec3_print(points + resolutionIndex);
+		vec3_print(points + resolutionIndex + 1);
+		printf("%.2f\n", resolutionLength);
+		printf("\n");
+	}*/
 
 	free(points);
 
@@ -569,8 +641,8 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 		Collider* temp = c2;
 		c2 = c1;
 		c1 = temp;
-		delta = (Vec3){ -1 * delta.x,-1 * delta.y,-1 * delta.z };
-		distanceNormal = (Vec3){ -1 * distanceNormal.x,-1 * distanceNormal.y,-1 * distanceNormal.z };
+		delta = vec3_scale(delta,-1);
+		distanceNormal = vec3_scale(distanceNormal,-1);
 	}
 
 
@@ -581,10 +653,11 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	if (c1->isMovable == 0)
 	{
 		c2->position = vec3_sum(c2->position, delta);
+		
 		Vec3 prevVelocity = c2->velocity;
 		Vec3 fullBounceVelocity = vec3_reflect(c2->velocity, distanceNormal);
 		Vec3 noBounceVelocity = vec3_scale(vec3_sum(prevVelocity, fullBounceVelocity), 0.5f);
-		c2->velocity = vec3_sum(noBounceVelocity,vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness));
+		c2->velocity = vec3_sum(noBounceVelocity, vec3_scale(vec3_subtract(fullBounceVelocity, noBounceVelocity), bounciness));
 
 		CollisionInfo ci;
 		ci.otherCollider = c1;

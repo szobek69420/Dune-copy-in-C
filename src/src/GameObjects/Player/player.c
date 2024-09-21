@@ -8,6 +8,7 @@
 #include "../../Renderer/renderer.h"
 #include "../../Renderer/Window/window.h"
 #include "../../Camera/camera.h"
+#include "../../Input/input.h"
 
 #include "../../Glm2/mat4.h"
 
@@ -53,9 +54,16 @@ const float vertices2[] = {
 };
 
 extern void* MAIN_CUM;
+static float aspectRatio = 1;
+static float currentCameraHeight = 30;
+
+static float DELTA_TIME = 0.0f;
 
 //prototypes
 void checkForScreenResize();
+void updateCameraProperties(Player* player);
+void handleInput(Player* player);
+void applyGravityAndDrag(Player* player);
 
 void* player_create()
 {
@@ -65,16 +73,7 @@ void* player_create()
 	player->renderable.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
 
-	Vec3 helper;
 	player->collider = physics_createBallCollider();
-	helper = (Vec3){ 3,40,0 };
-	physics_setColliderParam(player->collider, POSITION_VEC3, &helper);
-	helper = (Vec3){ 0,0.0f,0 };
-	physics_setColliderParam(player->collider, VELOCITY_VEC3, &helper);
-	helper.x = 1;
-	physics_setColliderParam(player->collider, RADIUS_FLOAT, &helper.x);
-	helper.x = 0;
-	physics_setColliderParam(player->collider, BOUNCINESS_FLOAT, &helper.x);
 	
 	return player;
 }
@@ -90,16 +89,16 @@ void player_destroy(void* _player)//releases resources
 
 void player_update(void* _player, float deltaTime)
 {
-	Player* player = (Player*)_player;
-	physics_getColliderParam(player->collider, POSITION_VEC3, &player->transform.position);
+	DELTA_TIME = deltaTime;
 
-	//gravity
-	Vec3 velocity;
-	physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
-	velocity = vec3_sum(velocity, (Vec3) { 0, -9.80625f * deltaTime, 0 });
-	physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+	Player* player = (Player*)_player;
+	physics_getColliderParam(player->collider, POSITION_VEC3, &player->transform.position);//update renderable position
+
+	applyGravityAndDrag(player);
+	handleInput(player);
 
 	checkForScreenResize();
+	updateCameraProperties(player);
 }
 
 void player_onStart(void* _player)
@@ -108,9 +107,17 @@ void player_onStart(void* _player)
 	player->transform.position = (Vec3){ 0,0,0 };
 	player->transform.rotation = (Quat){ 1,0,0,0 };
 
-	physics_setBouncinessCombine(BC_MULT);
+	physics_setBouncinessCombine(BC_MIN);
 
-	camera_setPosition(MAIN_CUM, (Vec3) { 15, 15, 0 });
+	Vec3 helper;
+	helper = (Vec3){ 5,50,0 };
+	physics_setColliderParam(player->collider, POSITION_VEC3, &helper);
+	helper = (Vec3){ 0,0.0f,0 };
+	physics_setColliderParam(player->collider, VELOCITY_VEC3, &helper);
+	helper.x = 1;
+	physics_setColliderParam(player->collider, RADIUS_FLOAT, &helper.x);
+	helper.x = 0.1f;
+	physics_setColliderParam(player->collider, BOUNCINESS_FLOAT, &helper.x);
 }
 
 void player_onDestroy(void* player)//do something ingame (the destroy() releases the resources)
@@ -128,10 +135,52 @@ void checkForScreenResize()
 	previousWidth = window_width();
 	previousHeight = window_height();
 
-	float projectionHeight = 25;
-	float projectionWidth = ((float)previousWidth / previousHeight) * projectionHeight;
+	aspectRatio = (float)previousWidth / previousHeight;
+}
 
-	camera_setProjection(MAIN_CUM, projectionWidth, projectionHeight, 0, 10);
+void updateCameraProperties(Player* player)
+{
+	float height = player->transform.position.y + 10.0f;
+	float width = height * aspectRatio;
+
+	camera_setProjection(MAIN_CUM, width, height, 0, 10);
+	
+	Vec3 pos = (Vec3){ player->transform.position.x - 5.0f + 0.5f * width,height * 0.5f,0 };
+	camera_setPosition(MAIN_CUM, pos);
+}
+
+void handleInput(Player* player)
+{
+	if (input_isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT) != 0)
+	{
+		int collisionCount;
+		CollisionInfo* collisions = physics_getColliderCollisions(player->collider, &collisionCount);
+
+		Vec3 velocity;
+		physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+		if (collisionCount == 0)
+			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 0, -1, 0 }, 30.0f * DELTA_TIME));
+		else
+			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 1, 0, 0 }, 30.0f * DELTA_TIME));
+		physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+
+		free(collisions);
+	}
+}
+
+void applyGravityAndDrag(Player* player)
+{
+	Vec3 velocity;
+	physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+
+	//gravity
+	velocity = vec3_sum(velocity, (Vec3) { 0, -9.80625f * DELTA_TIME, 0 });
+
+	//drag
+	Vec3 drag = vec3_scale(velocity, -0.001f * vec3_sqrMagnitude(velocity) * DELTA_TIME);
+	velocity = vec3_sum(velocity, drag);
+
+	physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 }
 
 
