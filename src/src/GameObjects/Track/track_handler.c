@@ -125,7 +125,7 @@ void trackHandler_render(void* trackHandler)
 
 float mapGenerator(float x)
 {
-	return 20.0f + 10*sinf(0.09f*x+0.76f)+5 * sinf(0.2f*x+1.1f);
+	return 20.0f +5 * sinf(0.25f*x+1.1f);
 }
 
 TrackSegment* createSegment(Vec3 position)
@@ -174,7 +174,7 @@ TrackSegment* createSegment(Vec3 position)
 		indices[k++] = i + TH_SEGMENT_RESOLUTION * TH_SEGMENT_LENGTH + 1;
 	}
 
-	tsz->renderable = renderer_createRenderable(vertices, 5*SEGMENT_VERTEX_COUNT, indices, SEGMENT_INDEX_COUNT);
+	tsz->renderable = renderer_createRenderable(vertices, 5*SEGMENT_VERTEX_COUNT, indices, SEGMENT_INDEX_COUNT,0);
 	tsz->renderable.texture = TEXTURE;
 
 

@@ -156,6 +156,19 @@ void renderer_setRenderMode(GLenum renderMode)
 	drawMode = renderMode;
 }
 
+void renderer_setBlending(int useBlending)
+{
+	if (useBlending)
+	{
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+	else
+	{
+		glDisable(GL_BLEND);
+	}
+}
+
 void renderer_renderObject(struct Renderable renderable, struct Mat4 model)
 {
 	glActiveTexture(GL_TEXTURE0);
@@ -177,16 +190,18 @@ void renderer_setCamera(struct Camera* cum)
 	camera = cum;
 }
 
-Renderable renderer_createRenderable(const float* vData, unsigned int vCount, const unsigned int* iData, unsigned int iCount)
+Renderable renderer_createRenderable(const float* vData, unsigned int vCount, const unsigned int* iData, unsigned int iCount, int isFrequentlyUpdated)
 {
 	Renderable r;
+
+	GLenum usage = isFrequentlyUpdated ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
 	glGenVertexArrays(1, &r.vao);
 	glBindVertexArray(r.vao);
 	
 	glGenBuffers(1, &r.vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, r.vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vCount, vData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vCount, vData, usage);
 	
 
 	if (iData == NULL)//no ebo is used
@@ -199,7 +214,7 @@ Renderable renderer_createRenderable(const float* vData, unsigned int vCount, co
 	{
 		glGenBuffers(1, &r.ebo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, r.ebo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * iCount, iData, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * iCount, iData, usage);
 
 		r.eboUsed = 1;
 		r.count = iCount;
@@ -247,4 +262,12 @@ void renderer_destroyTexture(texture_t texture)
 void renderer_setTexture(Renderable* renderable, texture_t texture)
 {
 	renderable->texture = texture;
+}
+
+void renderer_updateGeometry(Renderable* renderable, const float* vData, int count)
+{
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, renderable->vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * count, vData);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

@@ -129,5 +129,6 @@
   <ItemGroup>
     <None Include="Shaders\default.fag" />
     <None Include="Shaders\default.vag" />
+    <None Include="Assets\Shaders\trail.fag" />
   </ItemGroup>
 </Project>

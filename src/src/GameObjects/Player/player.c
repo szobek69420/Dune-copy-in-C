@@ -15,6 +15,10 @@
 
 #define RAD2DEG 57.2957795f
 
+#define TRAIL_LENGTH 20
+#define TRAIL_VERTEX_COUNT 2*TRAIL_LENGTH
+#define TRAIL_VERTEX_FLOAT_COUNT 5
+
 struct Player {
 	Transform transform;
 	Renderable renderable;
@@ -22,8 +26,14 @@ struct Player {
 
 	int touchingGrass;
 	float angularVelocity;
+
+	Renderable trail;
+	Vec3 trailPoints[TRAIL_LENGTH];
 };
 typedef struct Player Player;
+
+static int instanceCount = 0;
+static shader_id trailShader;
 
 
 const float vertices[] = {
@@ -71,12 +81,13 @@ void updateCameraProperties(Player* player);
 void handleInput(Player* player);
 void applyGravityAndDrag(Player* player);
 void rotatePlayer(Player* player);
+void updateTrail(void* _player);
 
 void* player_create()
 {
 	Player* player = (Player*)malloc(sizeof(Player));
 
-	player->renderable = renderer_createRenderable(vertices, 110, NULL, 22);
+	player->renderable = renderer_createRenderable(vertices, 110, NULL, 22,0);
 	player->renderable.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
 
 
@@ -85,7 +96,17 @@ void* player_create()
 
 	player->touchingGrass = 0;
 	player->angularVelocity = 0;
-	
+
+	memset(player->trailPoints, 0, sizeof(player->trailPoints));
+	void* temp = malloc(sizeof(float) * TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
+	player->trail = renderer_createRenderable(temp, TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT, NULL, TRAIL_VERTEX_COUNT,1);
+	player->trail.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
+	free(temp);
+
+	if (instanceCount == 0)
+		trailShader = renderer_createShader("Assets/Shaders/default.vag", "Assets/Shaders/trail.fag", NULL);
+	instanceCount++;
+
 	return player;
 }
 
@@ -94,7 +115,12 @@ void player_destroy(void* _player)//releases resources
 	Player* player = _player;
 	renderer_destroyRenderable(player->renderable);
 	physics_destroyCollider(player->collider);
+	renderer_destroyRenderable(player->trail);
 	free(player);
+	
+	instanceCount--;
+	if(instanceCount==0)
+		renderer_destroyShader(trailShader);
 }
 
 
@@ -127,6 +153,8 @@ void player_update(void* _player, float deltaTime)
 
 	rotatePlayer(player);
 
+	updateTrail(player);
+
 	checkForScreenResize();
 	updateCameraProperties(player);
 }
@@ -148,6 +176,10 @@ void player_onStart(void* _player)
 	physics_setColliderParam(player->collider, RADIUS_FLOAT, &helper.x);
 	helper.x = 0.1f;
 	physics_setColliderParam(player->collider, BOUNCINESS_FLOAT, &helper.x);
+
+	helper = (Vec3){ 5,50,0 };
+	for (int i = 0; i < TRAIL_LENGTH; i++)
+		player->trailPoints[i] = helper;
 }
 
 void player_onDestroy(void* player)//do something ingame (the destroy() releases the resources)
@@ -189,17 +221,19 @@ void handleInput(Player* player)
 		Vec3 velocity;
 		physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 		if (player->touchingGrass == 0)
-			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 0, -1, 0 }, 30.0f * DELTA_TIME));
+			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 0, -1, 0 }, 50.0f * DELTA_TIME));
 		else
 		{
 			if(collisionCount==0||vec3_magnitude(collisions[0].collisionForce)<0.0001f)
-				velocity = vec3_sum(velocity, vec3_scale((Vec3) { 1, 0, 0 }, 30.0f * DELTA_TIME));
+				velocity = vec3_sum(velocity, vec3_scale((Vec3) { 1, 0, 0 }, 100.0f * DELTA_TIME));
 			else
 			{
 				Vec3 temp = vec3_normalize(collisions[0].collisionForce);
-				temp = vec3_scale((Vec3){ temp.y, -temp.x, temp.z }, 50.0f * DELTA_TIME);
+				temp = vec3_scale((Vec3){ temp.y, -temp.x, temp.z }, 100.0f * DELTA_TIME);
 				
 				velocity = vec3_sum(velocity, temp);
+
+				//printf("force applied: %.3f %.3f %.3f\n", temp.x / DELTA_TIME, temp.y / DELTA_TIME, temp.z / DELTA_TIME);
 			}
 		}
 		physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
@@ -257,15 +291,91 @@ void rotatePlayer(Player* player)
 	player->transform.rotation = quat_multiply(quat_initRotation(player->angularVelocity * DELTA_TIME, (Vec3) { 0, 0, 1 }), player->transform.rotation);
 }
 
+void updateTrail(void* _player)
+{
+	Player* player = _player;
+
+	Vec3 velocity;
+	Vec3 position;
+	physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+	physics_getColliderParam(player->collider, POSITION_VEC3, &position);
+
+	float minDistance = 0.02f * vec3_magnitude(velocity);
+	if (minDistance > vec3_magnitude(vec3_subtract(position, player->trailPoints[TRAIL_LENGTH - 1])))
+		return;
+
+	for (int i = 0; i < TRAIL_LENGTH - 1; i++)//push the points left one slot
+		player->trailPoints[i] = player->trailPoints[i + 1];
+	player->trailPoints[TRAIL_LENGTH - 1] = position;
+
+
+	float trailLength = 0;
+	for (int i = 0; i < TRAIL_LENGTH - 1; i++)
+		trailLength += vec3_magnitude(vec3_subtract(player->trailPoints[i], player->trailPoints[i + 1]));
+
+	float* vData = malloc(sizeof(float) * TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
+	float currentLength = 0;
+	Vec3 trailNormal;
+	for (int i = 0, j=0; i < TRAIL_LENGTH; i++)
+	{
+		if(i!=0)
+			currentLength+= vec3_magnitude(vec3_subtract(player->trailPoints[i], player->trailPoints[i - 1]));
+		if (i < TRAIL_LENGTH - 1)
+		{
+			trailNormal = vec3_subtract(player->trailPoints[i + 1], player->trailPoints[i]);
+			if (vec3_sqrMagnitude(trailNormal) > 0.0001f)
+			{
+				trailNormal = vec3_normalize(trailNormal);
+				trailNormal = (Vec3){ -trailNormal.y,trailNormal.x,0 };
+			}
+			else
+				trailNormal = (Vec3){ 0,1,0 };
+		}
+
+		float uvX = currentLength / trailLength;
+		float transparency = uvX;
+
+		Vec3 delta = vec3_scale(trailNormal, 0.4f * uvX + 0.5f);
+		*(Vec3*)&vData[j] = vec3_sum(player->trailPoints[i],delta);
+		vData[j + 3] = uvX;
+		vData[j + 4] = 1;
+		j += TRAIL_VERTEX_FLOAT_COUNT;
+
+		*(Vec3*)&vData[j] = vec3_subtract(player->trailPoints[i], delta);
+		vData[j + 3] = uvX;
+		vData[j + 4] = 0;
+		j += TRAIL_VERTEX_FLOAT_COUNT;
+	}
+
+	renderer_updateGeometry(&player->trail, vData, TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
+
+	free(vData);
+}
+
 
 
 void player_render(void* _player)
 {
 	Player* player = _player;
 	
-	Mat4 model = gameObject_getTransformWorldModel(&player->transform);
-	//model = mat4_rotate(model, quat_axis(player->transform.rotation), RAD2DEG * quat_angle(player->transform.rotation));
+	Mat4 parentModel = gameObject_getTransformWorldModel(player->transform.parent);
+	Mat4 model = mat4_multiply(parentModel, gameObject_getTransformModel(&player->transform));
 
+
+	//trail
+	float trailLength = 0;
+	for (int i = 0; i < TRAIL_LENGTH - 1; i++)
+		trailLength += vec3_magnitude(vec3_subtract(player->trailPoints[i], player->trailPoints[i + 1]));
+	if (trailLength > 0.1f)
+	{
+		renderer_useShader(trailShader);
+		renderer_setRenderMode(GL_TRIANGLE_STRIP);
+		renderer_setBlending(69);
+		renderer_renderObject(((Player*)player)->trail, parentModel);
+		renderer_setBlending(0);
+	}
+
+	//player
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
