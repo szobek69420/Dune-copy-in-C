@@ -236,7 +236,7 @@ texture_t renderer_createTexture(const char* imagePath, int channels)
 		break;
 	}
 
-	return textureHandler_loadImage(imagePath, GL_RGBA, GL_RGBA, GL_LINEAR, 69);
+	return textureHandler_loadImage(imagePath, GL_RGBA, GL_RGBA, GL_NEAREST, 69);
 }
 
 void renderer_destroyTexture(texture_t texture)

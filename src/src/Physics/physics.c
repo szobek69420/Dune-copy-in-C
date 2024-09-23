@@ -8,6 +8,8 @@
 #include "../Glm2/vec4.h"
 #include <seqtor.h>
 
+#define EPS 0.00001f
+
 
 
 struct BoundingBox {
@@ -83,15 +85,6 @@ void physics_step(float deltaTime)
 			//printf("cleared\n");
 		}
 	}
-
-	//add velocity to position
-	for (int i = 0; i < LENGTH; i++)
-	{
-		if (seqtor_at(REGISTERED_COLLIDERS, i)->isMovable == 0)
-			continue;
-		
-		seqtor_at(REGISTERED_COLLIDERS, i)->position = vec3_sum(seqtor_at(REGISTERED_COLLIDERS, i)->position, vec3_scale(seqtor_at(REGISTERED_COLLIDERS, i)->velocity, DELTA_TIME));
-	}
 	
 
 	ColliderSortHelper* helpers = malloc(sizeof(ColliderSortHelper) * LENGTH);
@@ -118,12 +111,22 @@ void physics_step(float deltaTime)
 				continue;
 
 			int collision = physics_detectCollision(current, currentHelpers[j].collider);
-			if (collision == -1)
+			if (collision == -1)//even the bounding boxes don't touch
 				break;
 		}
 	}
 
 	free(helpers);
+
+
+	//add velocity to position
+	for (int i = 0; i < LENGTH; i++)
+	{
+		if (seqtor_at(REGISTERED_COLLIDERS, i)->isMovable == 0)
+			continue;
+
+		seqtor_at(REGISTERED_COLLIDERS, i)->position = vec3_sum(seqtor_at(REGISTERED_COLLIDERS, i)->position, vec3_scale(seqtor_at(REGISTERED_COLLIDERS, i)->velocity, DELTA_TIME));
+	}
 }
 
 void physics_deinit()
@@ -551,8 +554,8 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 	float resolutionLength = FLT_MAX;
 	int resolutionIndex = -1;
 
-	Vec3 polygonPos = polygon->position;
-	Vec3 ballPos = ball->position;
+	Vec3 polygonPos = (Vec3){ 0,0, 0 };
+	Vec3 ballPos = vec3_subtract(ball->position,polygon->position);
 	Vec3* points = malloc(sizeof(Vec3) * polygon->polygon.pointCount);
 	memcpy(points, polygon->polygon.points, sizeof(Vec3) * polygon->polygon.pointCount);
 	points[0] = vec3_sum(points[0], polygonPos);
@@ -577,7 +580,7 @@ int physics_collisionBallPolygon(Collider* ball, Collider* polygon)
 		if (vec3_dot(
 			delta,
 			(Vec3) {-(points[i + 1].y - points[i].y), points[i + 1].x - points[i].x, 0}
-		)<0.0001f)
+		)<EPS)
 		{
 			resolution = vec3_scale(vec3_normalize(delta), -deltaLength - ball->ball.radius);
 		}

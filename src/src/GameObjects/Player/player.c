@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 
 #include "../game_object.h"
@@ -12,10 +13,15 @@
 
 #include "../../Glm2/mat4.h"
 
+#define RAD2DEG 57.2957795f
+
 struct Player {
 	Transform transform;
 	Renderable renderable;
 	Collider* collider;
+
+	int touchingGrass;
+	float angularVelocity;
 };
 typedef struct Player Player;
 
@@ -64,6 +70,7 @@ void checkForScreenResize();
 void updateCameraProperties(Player* player);
 void handleInput(Player* player);
 void applyGravityAndDrag(Player* player);
+void rotatePlayer(Player* player);
 
 void* player_create()
 {
@@ -74,6 +81,10 @@ void* player_create()
 
 
 	player->collider = physics_createBallCollider();
+
+
+	player->touchingGrass = 0;
+	player->angularVelocity = 0;
 	
 	return player;
 }
@@ -94,8 +105,27 @@ void player_update(void* _player, float deltaTime)
 	Player* player = (Player*)_player;
 	physics_getColliderParam(player->collider, POSITION_VEC3, &player->transform.position);//update renderable position
 
+	//check for grass touching
+	int colliderCount;
+	CollisionInfo* ci = physics_getColliderCollisions(player->collider, &colliderCount);
+	if (colliderCount > 0)
+	{
+		player->touchingGrass += 2;
+		if (player->touchingGrass > 6)
+			player->touchingGrass = 6;
+	}
+	else
+	{
+		player->touchingGrass--;
+		if (player->touchingGrass < 0)
+			player->touchingGrass = 0;
+	}
+	free(ci);
+
 	applyGravityAndDrag(player);
 	handleInput(player);
+
+	rotatePlayer(player);
 
 	checkForScreenResize();
 	updateCameraProperties(player);
@@ -158,10 +188,20 @@ void handleInput(Player* player)
 
 		Vec3 velocity;
 		physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
-		if (collisionCount == 0)
+		if (player->touchingGrass == 0)
 			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 0, -1, 0 }, 30.0f * DELTA_TIME));
 		else
-			velocity = vec3_sum(velocity, vec3_scale((Vec3) { 1, 0, 0 }, 30.0f * DELTA_TIME));
+		{
+			if(collisionCount==0||vec3_magnitude(collisions[0].collisionForce)<0.0001f)
+				velocity = vec3_sum(velocity, vec3_scale((Vec3) { 1, 0, 0 }, 30.0f * DELTA_TIME));
+			else
+			{
+				Vec3 temp = vec3_normalize(collisions[0].collisionForce);
+				temp = vec3_scale((Vec3){ temp.y, -temp.x, temp.z }, 50.0f * DELTA_TIME);
+				
+				velocity = vec3_sum(velocity, temp);
+			}
+		}
 		physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 
 		free(collisions);
@@ -183,11 +223,48 @@ void applyGravityAndDrag(Player* player)
 	physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 }
 
-
-
-void player_render(void* player)
+void rotatePlayer(Player* player)
 {
-	Mat4 model = gameObject_getTransformWorldModel(&((Player*)player)->transform);
+	if (player->touchingGrass != 0)
+	{
+		int collisionCount;
+		CollisionInfo* infos = physics_getColliderCollisions(player->collider, &collisionCount);
+		if (collisionCount > 0 && vec3_magnitude(infos[0].collisionForce) > 0.0001f)
+		{
+			Vec3 temp = vec3_normalize(infos[0].collisionForce);
+			temp = (Vec3){ temp.y,-temp.x,0 };
+			
+			Vec3 velocity;
+			physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+
+			float newAngularVelocity = -vec3_dot(temp, velocity);//nem kell osztani a sugarral, mert 1
+
+			player->angularVelocity += 0.1f * (newAngularVelocity - player->angularVelocity);
+		}
+		free(infos);
+	}
+	else
+	{
+		if (player->angularVelocity > 0)
+			player->angularVelocity -= DELTA_TIME*5;
+		else
+			player->angularVelocity += DELTA_TIME*5;
+		
+		if (fabsf(player->angularVelocity) < 5*DELTA_TIME + 0.0001f)
+			player->angularVelocity = 0;
+	}
+	
+	player->transform.rotation = quat_multiply(quat_initRotation(player->angularVelocity * DELTA_TIME, (Vec3) { 0, 0, 1 }), player->transform.rotation);
+}
+
+
+
+void player_render(void* _player)
+{
+	Player* player = _player;
+	
+	Mat4 model = gameObject_getTransformWorldModel(&player->transform);
+	//model = mat4_rotate(model, quat_axis(player->transform.rotation), RAD2DEG * quat_angle(player->transform.rotation));
 
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLE_FAN);

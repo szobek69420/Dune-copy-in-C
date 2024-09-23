@@ -5,7 +5,7 @@
 #include "vec4.h"
 #include "mat4.h"
 
-#define RAD2DEG 0.01745329f
+#define RAD2DEG 57.2957795f
 
 struct Quaternion quat_init()
 {
