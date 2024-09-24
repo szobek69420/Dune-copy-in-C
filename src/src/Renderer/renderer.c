@@ -7,6 +7,8 @@
 #include <seqtor.h>
 #include "Shader/shader.h"
 
+#include "Fonts/fonts.h"
+
 struct ShaderInfo {
 	shader_id id;//used by the outside world
 	shader_t glId;//given by opengl
@@ -32,6 +34,8 @@ void renderer_init()
 	renderer_createShader("Assets/Shaders/default.vag", "Assets/Shaders/default.fag", NULL);
 
 	textureHandler_init();
+
+	FontSet* fs = fonts_import("Assets/Fonts/monocraft.png", "Assets/Fonts/monocraft.globus");
 }
 
 void renderer_deinit()

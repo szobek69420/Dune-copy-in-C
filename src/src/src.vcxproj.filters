@@ -72,6 +72,9 @@
     <ClCompile Include="GameObjects\Track\track_handler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\Fonts\fonts.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Track\track_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Fonts\fonts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

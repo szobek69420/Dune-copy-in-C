@@ -204,10 +204,15 @@ void updateCameraProperties(Player* player)
 {
 	float height = player->transform.position.y + 10.0f;
 	float width = height * aspectRatio;
+	if (width < 60)//hogy a labda max a kepernyo harmadaig menjen elore
+	{
+		height *= 60.0f / width;
+		width = 60.0f;
+	}
 
 	camera_setProjection(MAIN_CUM, width, height, 0, 10);
 	
-	Vec3 pos = (Vec3){ player->transform.position.x - 5.0f + 0.5f * width,height * 0.5f,0 };
+	Vec3 pos = (Vec3){ player->transform.position.x - 20.0f + 0.5f * width,height * 0.5f,0 };
 	camera_setPosition(MAIN_CUM, pos);
 }
 
@@ -251,7 +256,7 @@ void applyGravityAndDrag(Player* player)
 	velocity = vec3_sum(velocity, (Vec3) { 0, -9.80625f * DELTA_TIME, 0 });
 
 	//drag
-	Vec3 drag = vec3_scale(velocity, -0.001f * vec3_sqrMagnitude(velocity) * DELTA_TIME);
+	Vec3 drag = vec3_scale(vec3_normalize(velocity), -0.02f * vec3_magnitude(velocity) * DELTA_TIME);
 	velocity = vec3_sum(velocity, drag);
 
 	physics_setColliderParam(player->collider, VELOCITY_VEC3, &velocity);

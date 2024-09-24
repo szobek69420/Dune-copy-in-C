@@ -84,7 +84,7 @@ void trackHandler_update(void* trackHandler, float deltaTime)
 		else if (gameObject_isAlive(th->player) == 0)
 			th->player = NULL;
 
-		if (th->player != NULL && th->currentSegmentStart.x - TH_MAX_SEGMENT_COUNT * TH_SEGMENT_LENGTH + 30 < ((TrackHandler*)th->player)->transform.position.x)
+		if (th->player != NULL && th->currentSegmentStart.x - TH_MAX_SEGMENT_COUNT * TH_SEGMENT_LENGTH + 40 < ((TrackHandler*)th->player)->transform.position.x)
 		{
 			destroySegment(seqtor_at(th->segments, 0));
 			seqtor_remove_at(th->segments, 0);
@@ -125,7 +125,7 @@ void trackHandler_render(void* trackHandler)
 
 float mapGenerator(float x)
 {
-	return 20.0f +5 * sinf(0.25f*x+1.1f);
+	return 10.0f +5 * (1-sqrtf(powf(sinf(0.15f*x),2.0f)));
 }
 
 TrackSegment* createSegment(Vec3 position)
