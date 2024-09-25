@@ -20,5 +20,11 @@ void fonts_drawText(const char* text, int x, int y);
 
 void fonts_setScreenSize(int x, int y);
 void fonts_setCurrentFont(FontSet* fs);
+void fonts_setFontSize(int size);
+void fonts_setOrigin(TextOrigin horizontal, TextOrigin vertical);
+
+int fonts_getTextWidth(const char* text);
+//ignoreNegative: if a character sits lower than the text (e.g. 'g') line it is not counted
+int fonts_getTextHeight(const char* text, int ignoreNegative);
 
 #endif

@@ -33,6 +33,8 @@ struct FontSet {
 };
 typedef struct FontSet FontSet;
 
+const int TEXT_ADVANCE = 1;
+
 int compare(const void* char1, const void* char2);
 int searchForCharacter(char id, Character* arr, int size);
 
@@ -121,6 +123,7 @@ FontSet* fonts_import(const char* fontImage, const char* fontMeta)
 		logus.endY = logus.startY - (float)logus.height / height;
 
 		seqtor_push_back(fs->characters, logus);
+		//printf("%c: %.2f,%.2f\n", logus.id, logus.startX, logus.startY);
 	}
 
 	fclose(meta);
@@ -134,7 +137,7 @@ FontSet* fonts_import(const char* fontImage, const char* fontMeta)
 	}
 
 	qsort(fs->characters.data, fs->characters.size, sizeof(Character), compare);//hogy gyorsabb legyen benne a kereses
-
+	
 	printf("Font: %s loaded, %d characters\n", fs->name, seqtor_size(fs->characters));
 
 	return fs;
@@ -165,6 +168,45 @@ void fonts_drawText(const char* text, int x, int y)
 	int currentX = x;
 	int currentY = y;
 
+	switch (ORIGIN_H)
+	{
+	case ORIGIN_CENTER:
+		do
+		{
+			int width = fonts_getTextWidth(text);
+			currentX -= width / 2;
+		} while (0);
+		break;
+
+	case ORIGIN_RIGHT:
+		do
+		{
+			int width = fonts_getTextWidth(text);
+			currentX -= width;
+		} while (0);
+		break;
+	}
+
+	switch (ORIGIN_V)
+	{
+	case ORIGIN_CENTER:
+		do
+		{
+			int height = fonts_getTextHeight(text,0);
+			currentY -= height / 2;
+		} while (0);
+		break;
+
+	case ORIGIN_TOP:
+		do
+		{
+			int height = fonts_getTextHeight(text, 69);
+			currentY -= height;
+		} while (0);
+		break;
+	}
+
+
 	glUseProgram(SHADER);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, CURRENT_FONT->texture);
@@ -192,7 +234,7 @@ void fonts_drawText(const char* text, int x, int y)
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		currentX += current->width + 1;
+		currentX += current->width + TEXT_ADVANCE;
 		text++;
 	}
 
@@ -215,6 +257,77 @@ void fonts_setScreenSize(int x, int y)
 void fonts_setCurrentFont(FontSet* fs)
 {
 	CURRENT_FONT = fs;
+}
+
+void fonts_setFontSize(int size)
+{
+	CURRENT_FONT_SIZE = size;
+}
+void fonts_setOrigin(TextOrigin horizontal, TextOrigin vertical)
+{
+	if (horizontal == ORIGIN_LEFT || horizontal == ORIGIN_CENTER || horizontal == ORIGIN_RIGHT)
+		ORIGIN_H = horizontal;
+	else
+		printf("Fonts: Invalid horizontal origin\n");
+
+	if (vertical==ORIGIN_TOP || vertical == ORIGIN_CENTER || vertical == ORIGIN_BOTTOM)
+		ORIGIN_V = vertical;
+	else
+		printf("Fonts: Invalid horizontal origin\n");
+}
+
+
+int fonts_getTextWidth(const char* text)
+{
+	if (CURRENT_FONT == NULL)
+	{
+		printf("Fonts: No font is selected\n");
+		return 0;
+	}
+
+	int length = 0;
+	while (*text != 0)
+	{
+		int index = searchForCharacter(*text, CURRENT_FONT->characters.data, CURRENT_FONT->characters.size);
+		if (index == -1)
+			continue;
+
+		length += seqtor_at(CURRENT_FONT->characters, index).width + TEXT_ADVANCE;
+		
+		text++;
+	}
+
+	return length;
+}
+
+int fonts_getTextHeight(const char* text, int ignoreNegative)
+{
+	if (CURRENT_FONT == NULL)
+	{
+		printf("Fonts: No font is selected\n");
+		return 0;
+	}
+
+	if (strlen(text) == 0)
+		return 0;
+
+	int minHeight = 1000000;
+	int maxHeight = -1000000;
+	while (*text != 0)
+	{
+		int index = searchForCharacter(*text, CURRENT_FONT->characters.data, CURRENT_FONT->characters.size);
+		if (index == -1)
+			continue;
+
+		if (maxHeight < seqtor_at(CURRENT_FONT->characters, index).offsetY)
+			maxHeight = seqtor_at(CURRENT_FONT->characters, index).offsetY;
+		if (minHeight > seqtor_at(CURRENT_FONT->characters, index).offsetY - seqtor_at(CURRENT_FONT->characters, index).height)
+			minHeight = seqtor_at(CURRENT_FONT->characters, index).offsetY - seqtor_at(CURRENT_FONT->characters, index).height;
+
+		text++;
+	}
+
+	return ignoreNegative?maxHeight:maxHeight-minHeight;
 }
 
 
