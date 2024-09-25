@@ -42,13 +42,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\ploglamoszasssssz\Dune-copy-in-C\includes;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\ploglamoszasssssz\Dune-copy-in-C\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\includes;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>D:\ploglamoszasssssz\Dune-copy-in-C\includes;$(IncludePath)</IncludePath>
@@ -179,6 +179,8 @@
     <ClInclude Include="Renderer\Window\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\Fonts\fonts.fag" />
+    <None Include="Assets\Shaders\Fonts\fonts.vag" />
     <None Include="Assets\Shaders\trail.fag" />
     <None Include="Shaders\default.fag" />
     <None Include="Shaders\default.vag" />

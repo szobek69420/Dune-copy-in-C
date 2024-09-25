@@ -28,14 +28,18 @@ static Camera* camera=NULL;
 
 static shader_t currentShader = 0;
 
+static FontSet* fs;
+
 void renderer_init()
 {
 	seqtor_init(registeredShaders, 1);
 	renderer_createShader("Assets/Shaders/default.vag", "Assets/Shaders/default.fag", NULL);
 
 	textureHandler_init();
+	fonts_init();
 
-	FontSet* fs = fonts_import("Assets/Fonts/monocraft.png", "Assets/Fonts/monocraft.globus");
+	fs = fonts_import("Assets/Fonts/monocraft.png", "Assets/Fonts/monocraft.globus");
+	fonts_setCurrentFont(fs);
 }
 
 void renderer_deinit()
@@ -44,6 +48,8 @@ void renderer_deinit()
 		renderer_destroyShader(seqtor_at(registeredShaders, i).id);
 	seqtor_destroy(registeredShaders);
 
+	fonts_delete(fs);
+	fonts_deinit();
 	textureHandler_deinit();
 }
 

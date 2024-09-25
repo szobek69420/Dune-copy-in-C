@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "player.h"
 
 #include <stdlib.h>
@@ -12,6 +14,8 @@
 #include "../../Input/input.h"
 
 #include "../../Glm2/mat4.h"
+
+#include "../../Renderer/Fonts/fonts.h"
 
 #define RAD2DEG 57.2957795f
 
@@ -376,7 +380,7 @@ void player_render(void* _player)
 		renderer_useShader(trailShader);
 		renderer_setRenderMode(GL_TRIANGLE_STRIP);
 		renderer_setBlending(69);
-		renderer_renderObject(((Player*)player)->trail, parentModel);
+		renderer_renderObject(player->trail, parentModel);
 		renderer_setBlending(0);
 	}
 
@@ -384,5 +388,9 @@ void player_render(void* _player)
 	renderer_useShader(0);
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
-	renderer_renderObject(((Player*)player)->renderable, model);
+	renderer_renderObject(player->renderable, model);
+
+	char buffer[100];
+	sprintf(buffer, "pos: %.2f, %.2f", player->transform.position.x, player->transform.position.y);
+	fonts_drawText(buffer, 10, 1040);
 }

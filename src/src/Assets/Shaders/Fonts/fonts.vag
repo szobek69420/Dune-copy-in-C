@@ -1,0 +1,15 @@
+#version 330 core
+layout (location=0) in vec2 aUV;
+
+out vec2 uv;
+
+uniform vec4 textureInfo; //xy: texturepos, zw: size on texture
+uniform vec4 screenInfo; //xy: screenpos, zw: size on screen
+
+uniform mat4 projection;
+
+void main()
+{
+	uv=aUV*textureInfo.zw+textureInfo.xy;
+	gl_Position=projection*vec4(vec2(aUV.x,aUV.y-1.0)*screenInfo.zw+screenInfo.xy,0,1);
+}
