@@ -392,5 +392,5 @@ void player_render(void* _player)
 
 	char buffer[100];
 	sprintf(buffer, "pos: %.2f, %.2f", player->transform.position.x, player->transform.position.y);
-	fonts_drawText(buffer, 960, 1080);
+	fonts_drawText(buffer, 0, 0);
 }

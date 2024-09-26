@@ -3,10 +3,10 @@ in vec2 uv;
 out vec4 fragmentColour;
 
 uniform sampler2D tex;
+uniform vec4 colour;
 
 void main()
 {
 	fragmentColour=texture(tex,uv);
-	fragmentColour=fragmentColour.rgbr;
-	//fragmentColour=vec4(0,0,0,1);
+	fragmentColour=fragmentColour.rgbr*colour;
 }

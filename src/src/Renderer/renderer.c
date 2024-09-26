@@ -40,7 +40,8 @@ void renderer_init()
 
 	fs = fonts_import("Assets/Fonts/monocraft.png", "Assets/Fonts/monocraft.globus");
 	fonts_setCurrentFont(fs);
-	fonts_setOrigin(ORIGIN_CENTER, ORIGIN_TOP);
+	fonts_setOrigin(ORIGIN_LEFT, ORIGIN_TOP);
+	fonts_setColour(1, 0.85f, 0, 0.5f);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

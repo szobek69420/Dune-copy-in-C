@@ -22,6 +22,7 @@ void fonts_setScreenSize(int x, int y);
 void fonts_setCurrentFont(FontSet* fs);
 void fonts_setFontSize(int size);
 void fonts_setOrigin(TextOrigin horizontal, TextOrigin vertical);
+void fonts_setColour(float r, float g, float b, float a);
 
 int fonts_getTextWidth(const char* text);
 //ignoreNegative: if a character sits lower than the text (e.g. 'g') line it is not counted

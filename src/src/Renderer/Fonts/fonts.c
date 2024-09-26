@@ -70,6 +70,8 @@ void fonts_init()
 	SHADER=shader_import("Assets/Shaders/Fonts/fonts.vag", "Assets/Shaders/Fonts/fonts.fag", NULL);
 	glUseProgram(SHADER);
 	glUniform1i(glGetUniformLocation(SHADER, "tex"), 0);
+	glUniform4f(glGetUniformLocation(SHADER, "colour"), 1, 1, 1, 1);
+	glUniformMatrix4fv(glGetUniformLocation(SHADER, "projection"), 1, GL_FALSE, SCREEN_MATRIX.data);
 	glUseProgram(0);
 }
 
@@ -164,9 +166,8 @@ void fonts_drawText(const char* text, int x, int y)
 		return;
 	}
 
-	//TODO: calculate currentX and currentY so that they are at the bottom left of the text
 	int currentX = x;
-	int currentY = y;
+	int currentY = SCREEN_HEIGHT-y;//the ui library's (0;0) is the top left corner, the font's is the bottom left
 
 	switch (ORIGIN_H)
 	{
@@ -210,8 +211,6 @@ void fonts_drawText(const char* text, int x, int y)
 	glUseProgram(SHADER);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, CURRENT_FONT->texture);
-
-	glUniformMatrix4fv(glGetUniformLocation(SHADER, "projection"), 1, GL_FALSE, SCREEN_MATRIX.data);
 
 	glBindVertexArray(VAO);
 
@@ -274,6 +273,13 @@ void fonts_setOrigin(TextOrigin horizontal, TextOrigin vertical)
 		ORIGIN_V = vertical;
 	else
 		printf("Fonts: Invalid horizontal origin\n");
+}
+
+void fonts_setColour(float r, float g, float b, float a)
+{
+	glUseProgram(SHADER);
+	glUniform4f(glGetUniformLocation(SHADER, "colour"), r, g, b, a);
+	glUseProgram(0);
 }
 
 
