@@ -26,7 +26,7 @@ struct UIComponent {
 	void (*onRelease)(void*);
 };
 
-typedef struct UIComponent UIComponent;//every ui element has to have a "UIComponent component" member variable as first
+typedef struct UIComponent UIComponent;//every ui element has to have a "UIComponent" member variable as first
 
 
 enum UIElementType {
@@ -43,7 +43,7 @@ void ui_init();
 void ui_deinit();
 
 
-void* ui_createElement(UIElementType type);
+void* ui_createElement(UIElementType type,const char* name);
 void ui_destroyElement(void* element);
 
 
@@ -52,7 +52,7 @@ void ui_addElement(void* element, void* parent);
 void ui_render();
 
 
-UIComponent ui_initComponent();
+UIComponent ui_initComponent(const char* name);
 void ui_destroyComponent(UIComponent* uic);
 
 #endif

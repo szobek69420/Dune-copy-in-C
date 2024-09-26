@@ -28,8 +28,6 @@ static Camera* camera=NULL;
 
 static shader_t currentShader = 0;
 
-static FontSet* fs;
-
 void renderer_init()
 {
 	seqtor_init(registeredShaders, 1);
@@ -37,11 +35,6 @@ void renderer_init()
 
 	textureHandler_init();
 	fonts_init();
-
-	fs = fonts_import("Assets/Fonts/monocraft.png", "Assets/Fonts/monocraft.globus");
-	fonts_setCurrentFont(fs);
-	fonts_setOrigin(ORIGIN_LEFT, ORIGIN_TOP);
-	fonts_setColour(1, 0.85f, 0, 0.5f);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -54,7 +47,6 @@ void renderer_deinit()
 		renderer_destroyShader(seqtor_at(registeredShaders, i).id);
 	seqtor_destroy(registeredShaders);
 
-	fonts_delete(fs);
 	fonts_deinit();
 	textureHandler_deinit();
 }

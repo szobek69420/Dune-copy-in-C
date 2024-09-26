@@ -251,6 +251,10 @@ void fonts_setScreenSize(int x, int y)
 	SCREEN_HEIGHT = y;
 
 	SCREEN_MATRIX = mat4_ortho(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -1, 1);
+
+	glUseProgram(SHADER);
+	glUniformMatrix4fv(glGetUniformLocation(SHADER, "projection"), 1, GL_FALSE, SCREEN_MATRIX.data);
+	glUseProgram(0);
 }
 
 void fonts_setCurrentFont(FontSet* fs)

@@ -389,8 +389,4 @@ void player_render(void* _player)
 	renderer_setRenderMode(GL_TRIANGLE_FAN);
 
 	renderer_renderObject(player->renderable, model);
-
-	char buffer[100];
-	sprintf(buffer, "pos: %.2f, %.2f", player->transform.position.x, player->transform.position.y);
-	fonts_drawText(buffer, 0, 0);
 }

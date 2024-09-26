@@ -15,6 +15,8 @@
 #include "Input/event_queue.h"
 #include "Input/input.h"
 
+#include "UI/ui.h"
+
 
 #ifdef _MSC_VER
 #define _CRTDBG_MAP_ALLOC
@@ -49,6 +51,8 @@ int main()
     camera_setForward(MAIN_CUM, (Vec3) { 0, 0, -1 });
     renderer_init();
     physics_init();
+
+    ui_init();
 
     renderer_setCamera(MAIN_CUM);
     gameObject_init();
@@ -91,6 +95,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
         gameObject_render(window);
+        ui_render();
         
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -99,6 +104,7 @@ int main()
     glfwTerminate();
 
     gameObject_deinit();
+    ui_deinit();
     physics_deinit();
     renderer_deinit();
     camera_destroy(MAIN_CUM);

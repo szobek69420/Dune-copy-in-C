@@ -6,6 +6,8 @@
 #include <string.h>
 
 #include "../Renderer/Window/window.h"
+#include "Text/text.h"
+#include "../Renderer/Fonts/fonts.h"
 
 struct RootElement {
 	UIComponent component;
@@ -40,7 +42,7 @@ void ui_deinit()
 }
 
 
-void* ui_createElement(UIElementType type)
+void* ui_createElement(UIElementType type,const char* name)
 {
 	switch (type)
 	{
@@ -49,8 +51,7 @@ void* ui_createElement(UIElementType type)
 		break;
 
 	case UI_TEXT:
-
-		break;
+		return text_create(name);
 
 	case UI_IMAGE:
 
@@ -81,14 +82,27 @@ void ui_addElement(void* element, void* parent)
 	if (e->component.parent != NULL)
 		seqtor_remove(((RootElement*)e->component.parent)->component.children, e);
 
+	if (p == NULL)
+		p = ROOT;
 	seqtor_push_back(p->component.children, e);
 	e->component.parent = parent;
 }
 
 void ui_render()
 {
+	static int previousScreenWidth = -1;
+	static int previousScreenHeight = -1;
+
 	int screenWidth = window_width();
 	int screenHeight = window_height();
+
+	if (previousScreenWidth != screenWidth || previousScreenHeight != screenHeight)
+	{
+		previousScreenWidth = screenWidth;
+		previousScreenHeight = screenHeight;
+
+		fonts_setScreenSize(screenWidth, screenHeight);
+	}
 
 	for (int i = 0; i < seqtor_size(ROOT->component.children); i++)
 	{
@@ -106,6 +120,8 @@ UIComponent ui_initComponent(const char* name)
 
 	uic.xPos = 0;
 	uic.yPos = 0;
+	uic.width = 10;
+	uic.height = 10;
 	uic.name = malloc((strlen(name) + 1) * sizeof(char));
 	strcpy(uic.name, name);
 	
@@ -123,6 +139,8 @@ UIComponent ui_initComponent(const char* name)
 	uic.onPress = NULL;
 	uic.onHold = NULL;
 	uic.onRelease = NULL;
+
+	return uic;
 }
 
 void ui_destroyComponent(UIComponent* uic)

@@ -157,6 +157,7 @@
     <ClCompile Include="Renderer\Texture\stb_image.c" />
     <ClCompile Include="Renderer\Texture\texture_handler.c" />
     <ClCompile Include="Renderer\Window\window.c" />
+    <ClCompile Include="UI\Text\text.c" />
     <ClCompile Include="UI\ui.c" />
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +179,7 @@
     <ClInclude Include="Renderer\Shader\shader.h" />
     <ClInclude Include="Renderer\Texture\texture_handler.h" />
     <ClInclude Include="Renderer\Window\window.h" />
+    <ClInclude Include="UI\Text\text.h" />
     <ClInclude Include="UI\ui.h" />
   </ItemGroup>
   <ItemGroup>
