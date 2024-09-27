@@ -130,6 +130,16 @@ void renderer_destroyShader(shader_id shader)
 	}
 }
 
+shader_t renderer_getShaderGLId(shader_id shader)
+{
+	for (int i = 0; i < seqtor_size(registeredShaders); i++)
+	{
+		if (seqtor_at(registeredShaders, i).id == shader)
+			return seqtor_at(registeredShaders, i).glId;
+	}
+	return 0;
+}
+
 void renderer_useShader(shader_id shader)
 {
 	ShaderInfo* info = NULL;

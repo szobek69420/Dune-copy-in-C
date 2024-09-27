@@ -81,6 +81,9 @@
     <ClCompile Include="UI\Text\text.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UI\Image\image.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -143,6 +146,9 @@
     <ClInclude Include="UI\Text\text.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Image\image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\default.fag" />
@@ -150,5 +156,7 @@
     <None Include="Assets\Shaders\trail.fag" />
     <None Include="Assets\Shaders\Fonts\fonts.vag" />
     <None Include="Assets\Shaders\Fonts\fonts.fag" />
+    <None Include="Assets\Shaders\Image\image.vag" />
+    <None Include="Assets\Shaders\Image\image.fag" />
   </ItemGroup>
 </Project>

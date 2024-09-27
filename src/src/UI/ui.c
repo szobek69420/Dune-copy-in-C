@@ -4,9 +4,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <glad/glad.h>
 
 #include "../Renderer/Window/window.h"
 #include "Text/text.h"
+#include "Image/image.h"
 #include "../Renderer/Fonts/fonts.h"
 
 struct RootElement {
@@ -54,8 +56,7 @@ void* ui_createElement(UIElementType type,const char* name)
 		return text_create(name);
 
 	case UI_IMAGE:
-
-		break;
+		return image_create(name);
 
 	case UI_BUTTON:
 
@@ -65,10 +66,18 @@ void* ui_createElement(UIElementType type,const char* name)
 
 void ui_destroyElement(void* element)
 {
-	seqtor_remove(ELEMENTS, element);
+	RootElement* re = element;
 
-	if (((RootElement*)element)->component.destroy != NULL)
-		((RootElement*)element)->component.destroy(element);
+	while (seqtor_size(re->component.children) > 0)
+	{
+		ui_destroyElement(seqtor_at(re->component.children, 0));
+		seqtor_remove_at(re->component.children, 0);
+	}
+	
+	seqtor_remove(ELEMENTS, re);
+
+	if (re->component.destroy != NULL)
+		re->component.destroy(element);
 	else
 		free(element);
 }
@@ -102,8 +111,10 @@ void ui_render()
 		previousScreenHeight = screenHeight;
 
 		fonts_setScreenSize(screenWidth, screenHeight);
+		image_setScreenSize(screenWidth, screenHeight);
 	}
 
+	glDisable(GL_DEPTH_TEST);
 	for (int i = 0; i < seqtor_size(ROOT->component.children); i++)
 	{
 		RootElement* e = seqtor_at(ROOT->component.children, i);

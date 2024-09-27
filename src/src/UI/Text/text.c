@@ -138,3 +138,34 @@ void text_setText(void* element, const char* text)
 	t->text = malloc((strlen(t->text) + 1) * sizeof(char));
 	strcpy(t->text, text);
 }
+
+void text_setFontSize(void* element, int fontSize)
+{
+	Text* t = element;
+	t->fontSize = fontSize;
+}
+
+void text_setOrigin(void* element, TextOrigin hOrigin, TextOrigin vOrigin)
+{
+	Text* t = element;
+	t->hOrigin = hOrigin;
+	t->vOrigin = vOrigin;
+}
+
+void text_setColour(void* element, float r, float g, float b, float a)
+{
+	Text* t = element;
+	t->r = r;
+	t->g = g;
+	t->b = b;
+	t->a = a;
+}
+
+void text_pack(void* element)//calculates the minimal size so that the text is in the element
+{
+	Text* t = element;
+	fonts_setCurrentFont(FONT);
+	fonts_setFontSize(t->fontSize);
+	t->component.width = fonts_getTextWidth(t->text);
+	t->component.height = fonts_getTextHeight(t->text, 0);
+}

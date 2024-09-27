@@ -1,0 +1,12 @@
+#version 330 core
+layout (location=0) in vec2 aPos;
+
+out vec2 uv;
+uniform mat4 projection;
+uniform vec4 screenInfo;//xy: position, zw: scale
+
+void main()
+{
+	uv=vec2(aPos.x,1.0-aPos.y);
+	gl_Position=projection*vec4(screenInfo.xy+aPos.xy*screenInfo.zw,0,1);
+}
