@@ -16,6 +16,7 @@
 #include "../../Glm2/mat4.h"
 
 #include "../../Renderer/Fonts/fonts.h"
+#include "../../GameLoop/game_loop.h"
 
 #define RAD2DEG 57.2957795f
 
@@ -161,6 +162,9 @@ void player_update(void* _player, float deltaTime)
 
 	checkForScreenResize();
 	updateCameraProperties(player);
+
+	if (input_isKeyPressed(GLFW_KEY_C))
+		gameLoop_setCurrentStage(GS_DEINIT);
 }
 
 void player_onStart(void* _player)

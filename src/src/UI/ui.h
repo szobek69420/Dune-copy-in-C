@@ -49,6 +49,7 @@ void ui_destroyElement(void* element);
 
 
 void ui_addElement(void* element, void* parent);
+void ui_removeAll();
 
 void ui_render();
 

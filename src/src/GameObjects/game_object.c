@@ -28,14 +28,6 @@ void gameObject_init()
 	root = (RootObject*)malloc(sizeof(RootObject));
 	root->transform = gameObject_createTransform(-1, "root");
 	root->transform.isInitialized = 69;
-
-	void* player = NULL;
-	player = gameObject_create(PLAYER, "player");
-	gameObject_add(player, NULL);
-
-	void* trackHandler = NULL;
-	trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
-	gameObject_add(trackHandler, NULL);
 }
 
 void gameObject_deinit()

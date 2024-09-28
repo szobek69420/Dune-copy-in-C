@@ -87,6 +87,9 @@
     <ClCompile Include="UI\Canvas\canvas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameLoop\game_loop.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -153,6 +156,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UI\Canvas\canvas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLoop\game_loop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

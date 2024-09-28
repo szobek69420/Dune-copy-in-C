@@ -30,25 +30,11 @@ void ui_init()
 	ROOT->component = ui_initComponent("root");
 
 	seqtor_push_back(ELEMENTS, ROOT);
-
-	void* alma = ui_createElement(UI_CANVAS, "amogus");
-	ui_addElement(alma, NULL);
-
-	RootElement* alma2 = ui_createElement(UI_TEXT, "amogus2");
-	ui_addElement(alma2, alma);
-	text_setFontSize(alma2, 20);
-	text_setText(alma2, "globus");
-	text_setColour(alma2, 1, 0.85f, 0, 1);
-	alma2->component.xPos = 0;
-	alma2->component.yPos = 0;
-	alma2->component.hAlign = ALIGN_RIGHT;
-	alma2->component.vAlign = ALIGN_BOTTOM;
-	text_pack(alma2);
 }
 
 void ui_deinit()
 {
-	if(ROOT!=NULL)
+	if (ROOT != NULL)
 		ui_destroyElement(ROOT);
 	ROOT = NULL;
 
@@ -85,15 +71,21 @@ void ui_destroyElement(void* element)
 	while (seqtor_size(re->component.children) > 0)
 	{
 		ui_destroyElement(seqtor_at(re->component.children, 0));
-		seqtor_remove_at(re->component.children, 0);
+		//no need for removal from the children list as the ui_destroyElement handles that as well
 	}
 	
 	seqtor_remove(ELEMENTS, re);
 
+	if (re->component.parent != NULL)//remove from parent
+		seqtor_remove(((RootElement*)re->component.parent)->component.children, re);
+
 	if (re->component.destroy != NULL)
 		re->component.destroy(element);
 	else
-		free(element);
+	{
+		ui_destroyComponent(&re->component);
+		free(re);
+	}
 }
 
 
@@ -109,6 +101,12 @@ void ui_addElement(void* element, void* parent)
 		p = ROOT;
 	seqtor_push_back(p->component.children, e);
 	e->component.parent = parent;
+}
+
+void ui_removeAll()
+{
+	while (seqtor_size(ROOT->component.children) > 0)
+		ui_destroyElement(seqtor_at(ROOT->component.children, 0));
 }
 
 void ui_resizeHelper(void* element, int width, int height)
