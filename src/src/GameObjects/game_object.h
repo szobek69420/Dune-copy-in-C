@@ -43,6 +43,7 @@ void* gameObject_create(GameObjects type,const char* name);
 
 //if parent is NULL, then it goes under the root component
 void gameObject_add(void* gameObject, void* parent);
+void gameObject_removeAll();
 //destroys children as well
 void gameObject_destroy(void* gameObject);
 

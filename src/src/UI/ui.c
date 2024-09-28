@@ -9,6 +9,7 @@
 #include "../Renderer/Window/window.h"
 #include "Text/text.h"
 #include "Image/image.h"
+#include "Canvas/canvas.h"
 #include "../Renderer/Fonts/fonts.h"
 
 struct RootElement {
@@ -29,6 +30,18 @@ void ui_init()
 	ROOT->component = ui_initComponent("root");
 
 	seqtor_push_back(ELEMENTS, ROOT);
+
+	void* alma = ui_createElement(UI_CANVAS, "amogus");
+	ui_addElement(alma, NULL);
+
+	RootElement* alma2 = ui_createElement(UI_TEXT, "amogus2");
+	ui_addElement(alma2, alma);
+	text_setFontSize(alma2, 190);
+	text_setText(alma2, "globus");
+	text_setColour(alma2, 1, 0.85f, 0, 1);
+	alma2->component.hAlign = ALIGN_TOP;
+	alma2->component.vAlign = ALIGN_LEFT;
+	text_pack(alma2);
 }
 
 void ui_deinit()
@@ -49,8 +62,7 @@ void* ui_createElement(UIElementType type,const char* name)
 	switch (type)
 	{
 	case UI_CANVAS:
-
-		break;
+		return canvas_create(name,69);
 
 	case UI_TEXT:
 		return text_create(name);
@@ -97,6 +109,16 @@ void ui_addElement(void* element, void* parent)
 	e->component.parent = parent;
 }
 
+void ui_resizeHelper(void* element, int width, int height)
+{
+	RootElement* re = element;
+
+	for (int i = 0; i < seqtor_size(re->component.children); i++)
+		ui_resizeHelper(seqtor_at(re->component.children, i), width, height);
+
+	if (re->component.onScreenResize != NULL)
+		re->component.onScreenResize(re, width, height);
+}
 void ui_render()
 {
 	static int previousScreenWidth = -1;
@@ -112,6 +134,8 @@ void ui_render()
 
 		fonts_setScreenSize(screenWidth, screenHeight);
 		image_setScreenSize(screenWidth, screenHeight);
+
+		ui_resizeHelper(ROOT, screenWidth, screenHeight);
 	}
 
 	glDisable(GL_DEPTH_TEST);
@@ -150,6 +174,7 @@ UIComponent ui_initComponent(const char* name)
 	uic.onPress = NULL;
 	uic.onHold = NULL;
 	uic.onRelease = NULL;
+	uic.onScreenResize = NULL;
 
 	return uic;
 }

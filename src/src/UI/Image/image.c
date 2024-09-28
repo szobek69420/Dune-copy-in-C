@@ -16,6 +16,7 @@
 struct Image {
 	UIComponent component;
 	texture_t texture;
+	int shouldDestroyTexture;//if the texture has been imported here, it will also be released
 	float r, g, b, a;
 };
 
@@ -168,6 +169,9 @@ void image_destroy(void* element)
 {
 	Image* image = element;
 
+	if (image->shouldDestroyTexture != 0)
+		textureHandler_deleteImage(image->texture);
+
 	ui_destroyComponent(&image->component);
 	free(image);
 
@@ -180,4 +184,33 @@ void image_destroy(void* element)
 void image_setScreenSize(int width, int height)
 {
 	SCREEN_MATRIX = mat4_ortho(0, width, height, 0, -1, 1);
+}
+
+void image_setTexturePath(void* element, const char* texturePath, int channels)
+{
+	Image* image = element;
+	if (image->shouldDestroyTexture !=0)
+		textureHandler_deleteImage(image->texture);
+
+	image->texture = textureHandler_loadImage(texturePath, channels == 4 ? GL_RGBA : GL_RGB, GL_RGBA, GL_LINEAR, 69);
+	image->shouldDestroyTexture = 69;
+}
+void image_setTextureId(void* element, unsigned int textureId)
+{
+	Image* image = element;
+	if (image->shouldDestroyTexture != 0)
+		textureHandler_deleteImage(image->texture);
+
+	image->texture = textureId;
+	image->shouldDestroyTexture = 0;
+}
+
+
+void image_setColour(void* element, float r, float g, float b, float a)
+{
+	Image* image = element;
+	image->r = r;
+	image->g = g;
+	image->b = b;
+	image->a = a;
 }

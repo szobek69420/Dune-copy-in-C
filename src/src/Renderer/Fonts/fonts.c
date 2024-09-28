@@ -33,6 +33,8 @@ struct FontSet {
 };
 typedef struct FontSet FontSet;
 
+#define ADJUST_SIZE(VAL) ((VAL)*CURRENT_FONT_SIZE/(CURRENT_FONT->size))
+
 const int TEXT_ADVANCE = 1;
 
 int compare(const void* char1, const void* char2);
@@ -217,6 +219,10 @@ void fonts_drawText(const char* text, int x, int y)
 	glDepthFunc(GL_ALWAYS);
 	glEnable(GL_BLEND);
 
+	int advance = ADJUST_SIZE(TEXT_ADVANCE);
+	if (advance < 1)
+		advance = 1;
+
 	while (*text != 0)
 	{
 		int index = searchForCharacter(*text, CURRENT_FONT->characters.data, CURRENT_FONT->characters.size);
@@ -226,14 +232,14 @@ void fonts_drawText(const char* text, int x, int y)
 		Character* current = CURRENT_FONT->characters.data + index;
 
 		Vec4 textureInfo = (Vec4){ current->startX,current->endY,current->endX - current->startX,current->startY - current->endY };
-		Vec4 screenInfo = { currentX + current->offsetX,currentY+current->offsetY,current->width,current->height };
+		Vec4 screenInfo = { currentX + ADJUST_SIZE(current->offsetX),currentY + ADJUST_SIZE(current->offsetY),ADJUST_SIZE(current->width),ADJUST_SIZE(current->height)};
 
 		glUniform4f(glGetUniformLocation(SHADER, "textureInfo"), textureInfo.x, textureInfo.y, textureInfo.z, textureInfo.w);
 		glUniform4f(glGetUniformLocation(SHADER, "screenInfo"), screenInfo.x, screenInfo.y, screenInfo.z, screenInfo.w);
 
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		currentX += current->width + TEXT_ADVANCE;
+		currentX += ADJUST_SIZE(current->width) + advance;
 		text++;
 	}
 
@@ -296,13 +302,18 @@ int fonts_getTextWidth(const char* text)
 	}
 
 	int length = 0;
+	int advance = ADJUST_SIZE(TEXT_ADVANCE);
+	if (advance < 1)
+		advance = 1;
+
 	while (*text != 0)
 	{
 		int index = searchForCharacter(*text, CURRENT_FONT->characters.data, CURRENT_FONT->characters.size);
 		if (index == -1)
 			continue;
 
-		length += seqtor_at(CURRENT_FONT->characters, index).width + TEXT_ADVANCE;
+		int charWidth = seqtor_at(CURRENT_FONT->characters, index).width;
+		length += ADJUST_SIZE(charWidth) + advance;
 		
 		text++;
 	}
@@ -337,7 +348,10 @@ int fonts_getTextHeight(const char* text, int ignoreNegative)
 		text++;
 	}
 
-	return ignoreNegative?maxHeight:maxHeight-minHeight;
+	int height = ignoreNegative ? maxHeight : maxHeight - minHeight;
+	height = ADJUST_SIZE(height);
+
+	return height;
 }
 
 

@@ -24,6 +24,7 @@ struct UIComponent {
 	void (*onPress)(void*);
 	void (*onHold)(void*);
 	void (*onRelease)(void*);
+	void (*onScreenResize)(void*, int, int);//width,height
 };
 
 typedef struct UIComponent UIComponent;//every ui element has to have a "UIComponent" member variable as first

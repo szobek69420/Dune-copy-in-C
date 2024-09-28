@@ -177,6 +177,15 @@ void gameObject_add(void* gameObject, void* parent)
 	seqtor_push_back(REGISTERED_GAMEOBJECTS, gameObject);
 }
 
+void gameObject_removeAll()
+{
+	while (seqtor_size(root->transform.children) > 0)
+	{
+		gameObject_destroy(seqtor_at(root->transform.children, 0));
+		seqtor_remove_at(root->transform.children, 0);
+	}
+}
+
 void gameObject_destroy(void* gameObject)
 {
 	RootObject* p = (RootObject*)gameObject;
