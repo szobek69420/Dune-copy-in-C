@@ -190,13 +190,19 @@ void fonts_drawText(const char* text, int x, int y)
 		break;
 	}
 
-	switch (ORIGIN_V)
+	switch (ORIGIN_V)//ugy szamolja, hogy a szoveg legszelso sarka legyen a pontnal, ne a szoveg vonala (amin fekszenek a betuk)
 	{
+	case ORIGIN_BOTTOM:
+		do {
+			currentY += fonts_getTextHeight(text, 0) - fonts_getTextHeight(text, 69);
+		} while (0);
+		break;
+
 	case ORIGIN_CENTER:
 		do
 		{
 			int height = fonts_getTextHeight(text,0);
-			currentY -= height / 2;
+			currentY -= height / 2 - (height - fonts_getTextHeight(text, 69));
 		} while (0);
 		break;
 

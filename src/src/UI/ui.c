@@ -36,11 +36,13 @@ void ui_init()
 
 	RootElement* alma2 = ui_createElement(UI_TEXT, "amogus2");
 	ui_addElement(alma2, alma);
-	text_setFontSize(alma2, 190);
+	text_setFontSize(alma2, 20);
 	text_setText(alma2, "globus");
 	text_setColour(alma2, 1, 0.85f, 0, 1);
-	alma2->component.hAlign = ALIGN_TOP;
-	alma2->component.vAlign = ALIGN_LEFT;
+	alma2->component.xPos = 0;
+	alma2->component.yPos = 0;
+	alma2->component.hAlign = ALIGN_RIGHT;
+	alma2->component.vAlign = ALIGN_BOTTOM;
 	text_pack(alma2);
 }
 
