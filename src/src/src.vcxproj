@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClCompile Include="Camera\camera.c" />
     <ClCompile Include="GameLoop\game_loop.c" />
+    <ClCompile Include="GameManager\game_manager.c" />
     <ClCompile Include="GameObjects\game_object.c" />
     <ClCompile Include="GameObjects\Player\player.c" />
     <ClCompile Include="GameObjects\Track\track_handler.c" />
@@ -167,6 +168,7 @@
   <ItemGroup>
     <ClInclude Include="Camera\camera.h" />
     <ClInclude Include="GameLoop\game_loop.h" />
+    <ClInclude Include="GameManager\game_manager.h" />
     <ClInclude Include="GameObjects\game_object.h" />
     <ClInclude Include="GameObjects\Player\player.h" />
     <ClInclude Include="GameObjects\Track\track_handler.h" />

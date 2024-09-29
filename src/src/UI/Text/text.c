@@ -109,7 +109,7 @@ void text_setText(void* element, const char* text)
 {
 	Text* t = element;
 	free(t->text);
-	t->text = malloc((strlen(t->text) + 1) * sizeof(char));
+	t->text = malloc((strlen(text) + 1) * sizeof(char));
 	strcpy(t->text, text);
 }
 

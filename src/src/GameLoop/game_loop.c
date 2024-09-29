@@ -18,6 +18,10 @@
 #include "../Input/input.h"
 
 #include "../UI/ui.h"
+#include "../UI/Text/text.h"
+#include "../UI/Button/button.h"
+
+#include "../GameManager/game_manager.h"
 
 GLFWwindow* init_window(const char* name, int width, int height);
 void windowSizeCallback(GLFWwindow* window, int width, int height);
@@ -70,6 +74,7 @@ void gameLoop_loop()
             while ((e = eventQueue_poll()).type != NONE)
                 input_handleEvent(e);
             ui_handleInput();
+           
 
             gameObject_update((float)deltaTime);
 
@@ -129,22 +134,29 @@ void gameLoop_handleStageChange()
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LEQUAL);
 
-            gameLoop_setCurrentStage(GS_INGAME);
+            gameLoop_setCurrentStage(GS_MENU);
         } while (0);
         break;
 
     case GS_DEINIT:
         do {
+            printf("deinitializing...\n");
+
+            gameObject_removeAll();
+            ui_removeAll();
+
+           
             gameObject_deinit();
             ui_deinit();
             physics_deinit();
             renderer_deinit();
             camera_destroy(MAIN_CUM);
 
+            glfwDestroyWindow(CURRENT_WINDOW);
+            glfwTerminate();
+
             MAIN_CUM = NULL;
             CURRENT_WINDOW = NULL;
-
-            glfwTerminate();
         } while (0);
         break;
 
@@ -161,9 +173,46 @@ void gameLoop_handleStageChange()
             trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
             gameObject_add(trackHandler, NULL);
 
-            struct { UIComponent c; }*button = ui_createElement(UI_BUTTON, "glsadf");
-            button->c.width = 200;
-            ui_addElement(button, NULL);
+
+            void* canvas = ui_createElement(UI_CANVAS, "canvas");
+            struct { UIComponent c; } *playerPosText = ui_createElement(UI_TEXT, "playerInfo");
+
+            playerPosText->c.hAlign = ALIGN_LEFT;
+            playerPosText->c.vAlign = ALIGN_TOP;
+            playerPosText->c.xPos = 10;
+            playerPosText->c.yPos = 10;
+            text_setOrigin(playerPosText, ORIGIN_LEFT, ORIGIN_TOP);
+            text_setColour(playerPosText, 1, 0.85f, 0, 1);
+            text_setFontSize(playerPosText, 30);
+
+            ui_addElement(canvas, NULL);
+            ui_addElement(playerPosText, canvas);
+        } while (0);
+        break;
+
+    case GS_MENU:
+        do {
+            gameObject_removeAll();
+            ui_removeAll();
+
+            void* canvas = ui_createElement(UI_CANVAS, "canvas");
+
+            struct { UIComponent c; } *button = ui_createElement(UI_BUTTON, "button");
+            text_setText(button_getText(button), "RAAAAAH");
+            text_setColour(button_getText(button), 1, 0.85f, 0, 1);
+            button->c.width = 300;
+            button->c.height = 80;
+            button_setOnRelease(button, gameManager_startGame);
+
+            struct { UIComponent c; }*title = ui_createElement(UI_TEXT, "tit");
+            text_setText(title, "curling simulator");
+            text_setColour(title, 1, 0, 0, 1);
+            text_setFontSize(title, 60);
+            title->c.yPos = -100;
+
+            ui_addElement(canvas, NULL);
+            ui_addElement(button, canvas);
+            ui_addElement(title, canvas);
         } while (0);
         break;
     }

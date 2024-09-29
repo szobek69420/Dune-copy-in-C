@@ -93,6 +93,9 @@
     <ClCompile Include="UI\Button\button.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameManager\game_manager.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -165,6 +168,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UI\Button\button.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager\game_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

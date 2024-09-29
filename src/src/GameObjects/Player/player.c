@@ -18,6 +18,9 @@
 #include "../../Renderer/Fonts/fonts.h"
 #include "../../GameLoop/game_loop.h"
 
+#include "../../UI/ui.h"
+#include "../../UI/Text/text.h"
+
 #define RAD2DEG 57.2957795f
 
 #define TRAIL_LENGTH 20
@@ -34,6 +37,8 @@ struct Player {
 
 	Renderable trail;
 	Vec3 trailPoints[TRAIL_LENGTH];
+
+	void* playerInfoText;
 };
 typedef struct Player Player;
 
@@ -102,6 +107,8 @@ void* player_create()
 	player->touchingGrass = 0;
 	player->angularVelocity = 0;
 
+	player->playerInfoText = NULL;
+
 	memset(player->trailPoints, 0, sizeof(player->trailPoints));
 	void* temp = malloc(sizeof(float) * TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
 	player->trail = renderer_createRenderable(temp, TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT, NULL, TRAIL_VERTEX_COUNT,1);
@@ -163,6 +170,17 @@ void player_update(void* _player, float deltaTime)
 	checkForScreenResize();
 	updateCameraProperties(player);
 
+
+	//update playerinfo
+	if (player->playerInfoText != NULL)
+	{
+		char buffer[50];
+		sprintf_s(buffer, 50, "Position: %.1f, %.1f", player->transform.position.x, player->transform.position.y);
+		text_setText(player->playerInfoText, buffer);
+	}
+
+
+	//yeet game
 	if (input_isKeyPressed(GLFW_KEY_C))
 		gameLoop_setCurrentStage(GS_DEINIT);
 }
@@ -188,6 +206,8 @@ void player_onStart(void* _player)
 	helper = (Vec3){ 5,50,0 };
 	for (int i = 0; i < TRAIL_LENGTH; i++)
 		player->trailPoints[i] = helper;
+
+	player->playerInfoText = ui_getElementByName("playerInfo");
 }
 
 void player_onDestroy(void* player)//do something ingame (the destroy() releases the resources)

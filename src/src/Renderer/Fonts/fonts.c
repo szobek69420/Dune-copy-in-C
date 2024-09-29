@@ -142,6 +142,7 @@ FontSet* fonts_import(const char* fontImage, const char* fontMeta)
 
 	qsort(fs->characters.data, fs->characters.size, sizeof(Character), compare);//hogy gyorsabb legyen benne a kereses
 	
+
 	printf("Font: %s loaded, %d characters\n", fs->name, seqtor_size(fs->characters));
 
 	return fs;

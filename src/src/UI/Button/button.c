@@ -230,7 +230,7 @@ void* button_getText(void* element)
 
 void button_setNormalColour(void* element, float r, float g, float b, float a)
 {
-	Button* button;
+	Button* button=element;
 	button->normalColour.r = r;
 	button->normalColour.g = g;
 	button->normalColour.b = b;
@@ -238,7 +238,7 @@ void button_setNormalColour(void* element, float r, float g, float b, float a)
 }
 void button_setHoverColour(void* element, float r, float g, float b, float a)
 {
-	Button* button;
+	Button* button = element;
 	button->hoverColour.r = r;
 	button->hoverColour.g = g;
 	button->hoverColour.b = b;
@@ -246,7 +246,7 @@ void button_setHoverColour(void* element, float r, float g, float b, float a)
 }
 void button_setPressedColour(void* element, float r, float g, float b, float a)
 {
-	Button* button;
+	Button* button = element;
 	button->pressedColour.r = r;
 	button->pressedColour.g = g;
 	button->pressedColour.b = b;

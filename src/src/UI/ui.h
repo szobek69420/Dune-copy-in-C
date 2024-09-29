@@ -48,6 +48,8 @@ void ui_deinit();
 void* ui_createElement(UIElementType type,const char* name);
 void ui_destroyElement(void* element);
 
+void* ui_getElementByName(const char* name);
+
 
 void ui_addElement(void* element, void* parent);
 void ui_removeAll();

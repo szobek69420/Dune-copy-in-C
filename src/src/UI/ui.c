@@ -32,7 +32,7 @@ void ui_init()
 	ROOT = malloc(sizeof(RootElement));
 	ROOT->component = ui_initComponent("root");
 
-	seqtor_push_back(ELEMENTS, ROOT);
+	printf("UI: initialized\n");
 }
 
 void ui_deinit()
@@ -41,10 +41,13 @@ void ui_deinit()
 		ui_destroyElement(ROOT);
 	ROOT = NULL;
 
+	printf("remaining elements: %d\n", seqtor_size(ELEMENTS));
 	while (seqtor_size(ELEMENTS) > 0)
 		ui_destroyElement(seqtor_at(ELEMENTS, 0));
 
 	seqtor_destroy(ELEMENTS);
+
+	printf("UI: deinitialized\n");
 }
 
 
@@ -78,7 +81,7 @@ void* ui_createElement(UIElementType type,const char* name)
 void ui_destroyElement(void* element)
 {
 	RootElement* re = element;
-	printf("delete: %s\n", re->component.name);
+
 	while (seqtor_size(re->component.children) > 0)
 	{
 		ui_destroyElement(seqtor_at(re->component.children, 0));
@@ -97,6 +100,17 @@ void ui_destroyElement(void* element)
 		ui_destroyComponent(&re->component);
 		free(re);
 	}
+}
+
+void* ui_getElementByName(const char* name)
+{
+	for (int i = 0; i < seqtor_size(ELEMENTS); i++)
+	{
+		if (strcmp(((RootElement*)seqtor_at(ELEMENTS, i))->component.name, name) == 0)
+			return seqtor_at(ELEMENTS, i);
+	}
+
+	return NULL;
 }
 
 
@@ -300,6 +314,7 @@ UIComponent ui_initComponent(const char* name)
 
 void ui_destroyComponent(UIComponent* uic)
 {
+	printf("UI: destroyed %s\n", uic->name);
 	free(uic->name);
 	seqtor_destroy(uic->children);
 }
