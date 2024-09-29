@@ -64,40 +64,7 @@ void canvas_render(void* element, int minX, int minY, int maxX, int maxY)
 		maxY = canvas->component.height;
 	}
 	else
-	{
-		switch (canvas->component.hAlign)
-		{
-		case ALIGN_LEFT:
-			minX = minX + canvas->component.xPos;
-			break;
-
-		case ALIGN_CENTER:
-			minX = (minX + maxX) / 2 + canvas->component.xPos - canvas->component.width / 2;
-			break;
-
-		case ALIGN_RIGHT:
-			minX = maxX - canvas->component.xPos - canvas->component.width;
-			break;
-		}
-
-		switch (canvas->component.vAlign)
-		{
-		case ALIGN_TOP:
-			minY = minY + canvas->component.yPos;
-			break;
-
-		case ALIGN_CENTER:
-			minY = (minY + maxY) / 2 + canvas->component.yPos - canvas->component.height / 2;
-			break;
-
-		case ALIGN_BOTTOM:
-			minY = maxY - canvas->component.yPos - canvas->component.height;
-			break;
-		}
-
-		maxX = minX + canvas->component.width;
-		maxY = minY + canvas->component.height;
-	}
+		ui_calculateBounds(canvas, &minX, &minY, &maxX, &maxY);
 
 
 	for (int i = 0; i < seqtor_size(canvas->component.children); i++)

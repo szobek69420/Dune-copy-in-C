@@ -9,4 +9,6 @@ void image_setTexturePath(void* element, const char* texturePath,int channelCoun
 void image_setTextureId(void* element, unsigned int textureId);
 void image_setColour(void* element, float r, float g, float b, float a);
 
+void image_getColour(void* element, float* r, float* g, float* b, float* a);
+
 #endif

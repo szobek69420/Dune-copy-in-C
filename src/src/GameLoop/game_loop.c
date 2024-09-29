@@ -69,6 +69,7 @@ void gameLoop_loop()
             Event e;
             while ((e = eventQueue_poll()).type != NONE)
                 input_handleEvent(e);
+            ui_handleInput();
 
             gameObject_update((float)deltaTime);
 
@@ -159,6 +160,10 @@ void gameLoop_handleStageChange()
             void* trackHandler = NULL;
             trackHandler = gameObject_create(TRACK_HANDLER, "track_handler");
             gameObject_add(trackHandler, NULL);
+
+            struct { UIComponent c; }*button = ui_createElement(UI_BUTTON, "glsadf");
+            button->c.width = 200;
+            ui_addElement(button, NULL);
         } while (0);
         break;
     }

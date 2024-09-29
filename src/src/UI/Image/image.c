@@ -114,44 +114,12 @@ void image_render(void* element, int minX, int minY, int maxX, int maxY)
 {
 	Image* image = element;
 
-	int currentX = 0;
-	int currentY = 0;
-
-	//currentX and currentY have to be transformed so that they point to the top left of the thing
-	switch (image->component.hAlign)
-	{
-	case ALIGN_LEFT:
-		currentX = minX + image->component.xPos;
-		break;
-
-	case ALIGN_CENTER:
-		currentX = (minX + maxX) / 2 + image->component.xPos - image->component.width / 2;
-		break;
-
-	case ALIGN_RIGHT:
-		currentX = maxX - image->component.xPos - image->component.width;
-		break;
-	}
-
-	switch (image->component.vAlign)
-	{
-	case ALIGN_TOP:
-		currentY = minY + image->component.yPos;
-		break;
-
-	case ALIGN_CENTER:
-		currentY = (minY + maxY) / 2 + image->component.yPos - image->component.height / 2;
-		break;
-
-	case ALIGN_BOTTOM:
-		currentY = maxY - image->component.yPos - image->component.height;
-		break;
-	}
+	ui_calculateBounds(image, &minX, &minY, &maxX, &maxY);
 
 	glBindVertexArray(VAO);
 	renderer_useShader(SHADER_ID);
 	glUniform4f(glGetUniformLocation(SHADER, "colour"), image->r, image->g, image->b, image->a);
-	glUniform4f(glGetUniformLocation(SHADER, "screenInfo"), currentX, currentY, image->component.width, image->component.height);
+	glUniform4f(glGetUniformLocation(SHADER, "screenInfo"), minX, minY, image->component.width, image->component.height);
 	glUniformMatrix4fv(glGetUniformLocation(SHADER, "projection"), 1, GL_FALSE, SCREEN_MATRIX.data);
 	
 	glActiveTexture(GL_TEXTURE0);
@@ -213,4 +181,13 @@ void image_setColour(void* element, float r, float g, float b, float a)
 	image->g = g;
 	image->b = b;
 	image->a = a;
+}
+
+void image_getColour(void* element, float* r, float* g, float* b, float* a)
+{
+	Image* image = element;
+	*r = image->r;
+	*g = image->g;
+	*b = image->b;
+	*a = image->a;
 }

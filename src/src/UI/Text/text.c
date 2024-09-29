@@ -58,46 +58,20 @@ void* text_create(const char* name)
 
 void text_destroy(void* text)
 {
-	printf("text deleted\n");
+	Text* t = text;
+	ui_destroyComponent(&t->component);
+	free(t->text);
+	free(t);
 }
 
 void text_render(void* text, int minX, int minY, int maxX, int maxY)
 {
 	Text* t = text;
 
-	int currentX = 0;
-	int currentY = 0;
+	int currentX = minX;
+	int currentY = minY;
 
-	//currentX and currentY have to be transformed so that they point to the top left of the thing
-	switch (t->component.hAlign)
-	{
-	case ALIGN_LEFT:
-		currentX = minX + t->component.xPos;
-		break;
-
-	case ALIGN_CENTER:
-		currentX = (minX+maxX)/2+t->component.xPos-t->component.width/2;
-		break;
-
-	case ALIGN_RIGHT:
-		currentX = maxX - t->component.xPos - t->component.width;
-		break;
-	}
-
-	switch (t->component.vAlign)
-	{
-	case ALIGN_TOP:
-		currentY = minY + t->component.yPos;
-		break;
-
-	case ALIGN_CENTER:
-		currentY = (minY + maxY) / 2 + t->component.yPos - t->component.height / 2;
-		break;
-
-	case ALIGN_BOTTOM:
-		currentY = maxY - t->component.yPos - t->component.height;
-		break;
-	}
+	ui_calculateBounds(t, &currentX, &currentY, &maxX, &maxY);
 
 
 	//currentX and currentY also has to be modified according to the text origin
@@ -159,6 +133,15 @@ void text_setColour(void* element, float r, float g, float b, float a)
 	t->g = g;
 	t->b = b;
 	t->a = a;
+}
+
+void text_getColour(void* element, float* r, float* g, float* b, float* a)
+{
+	Text* t = element;
+	*r = t->r;
+	*g = t->g;
+	*b = t->b;
+	*a = t->a;
 }
 
 void text_pack(void* element)//calculates the minimal size so that the text is in the element

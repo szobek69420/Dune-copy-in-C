@@ -7,10 +7,13 @@
 #include <glad/glad.h>
 
 #include "../Renderer/Window/window.h"
+#include "../Renderer/Fonts/fonts.h"
 #include "Text/text.h"
 #include "Image/image.h"
 #include "Canvas/canvas.h"
-#include "../Renderer/Fonts/fonts.h"
+#include "Button/button.h"
+
+#include "../Input/input.h"
 
 struct RootElement {
 	UIComponent component;
@@ -47,27 +50,35 @@ void ui_deinit()
 
 void* ui_createElement(UIElementType type,const char* name)
 {
+	void* element = NULL;
 	switch (type)
 	{
 	case UI_CANVAS:
-		return canvas_create(name,69);
+		element= canvas_create(name,69);
+		break;
 
 	case UI_TEXT:
-		return text_create(name);
+		element = text_create(name);
+		break;
 
 	case UI_IMAGE:
-		return image_create(name);
+		element = image_create(name);
+		break;
 
 	case UI_BUTTON:
-
+		element = button_create(name);
 		break;
 	}
+
+	if (element != NULL)
+		seqtor_push_back(ELEMENTS, element);
+	return element;
 }
 
 void ui_destroyElement(void* element)
 {
 	RootElement* re = element;
-
+	printf("delete: %s\n", re->component.name);
 	while (seqtor_size(re->component.children) > 0)
 	{
 		ui_destroyElement(seqtor_at(re->component.children, 0));
@@ -97,10 +108,10 @@ void ui_addElement(void* element, void* parent)
 	if (e->component.parent != NULL)
 		seqtor_remove(((RootElement*)e->component.parent)->component.children, e);
 
-	if (p == NULL)
+	if (p == NULL&&e!=ROOT)
 		p = ROOT;
 	seqtor_push_back(p->component.children, e);
-	e->component.parent = parent;
+	e->component.parent = p;
 }
 
 void ui_removeAll()
@@ -147,6 +158,113 @@ void ui_render()
 	}
 }
 
+#define IS_POINTER_IN_BOUNDS(X_INT,Y_INT) ((X_INT)>minX&&(X_INT)<maxX&&(Y_INT)>minY&&(Y_INT)<maxY)
+
+void ui_handleInputHelper(
+	struct { UIComponent component; } *element, 
+	enum { PRESSED, HELD, RELEASED, NONE } state,
+	int minX, int minY, int maxX, int maxY
+)
+{
+	if (element->component.isInteractable == 0)
+		return;
+
+	ui_calculateBounds(element, &minX, &minY, &maxX, &maxY);
+
+	double _x, _y;
+	input_getMousePosition(&_x, &_y);
+	int x = (int)_x;
+	int y = (int)_y;
+
+	if (!IS_POINTER_IN_BOUNDS(x, y))
+		goto handle_children;
+
+	switch (state)
+	{
+	case PRESSED:
+		if (element->component.onPress != NULL)
+			element->component.onPress(element);
+		break;
+
+	case RELEASED:
+		if (element->component.onRelease != NULL)
+			element->component.onRelease(element);
+		break;
+
+	case HELD:
+		if (element->component.onHold != NULL)
+			element->component.onHold(element);
+		break;
+
+	default:
+		if (element->component.onHover != NULL)
+			element->component.onHover(element);
+		break;
+	}
+
+handle_children:
+
+	for (int i = 0; i < seqtor_size(element->component.children); i++)
+		ui_handleInputHelper(seqtor_at(element->component.children, i), state, minX, minY, maxX, maxY);
+}
+
+void ui_handleInput()
+{
+	enum { PRESSED, HELD, RELEASED, NONE } state = NONE;
+	if (input_isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
+		state = PRESSED;
+	else if (input_isMouseButtonReleased(GLFW_MOUSE_BUTTON_LEFT))
+		state = RELEASED;
+	else if (input_isMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT))
+		state = HELD;
+
+	for(int i=0;i<seqtor_size(ROOT->component.children);i++)
+		ui_handleInputHelper(seqtor_at(ROOT->component.children,i), state, 0, 0, window_width(), window_height());
+}
+
+void ui_calculateBounds(void* element, int* minX, int* minY, int* maxX, int* maxY)
+{
+	RootElement* re = element;
+
+	int currentX = 0;
+	int currentY = 0;
+
+	switch (re->component.hAlign)
+	{
+	case ALIGN_LEFT:
+		currentX = *minX + re->component.xPos;
+		break;
+
+	case ALIGN_CENTER:
+		currentX = (*minX + *maxX) / 2 + re->component.xPos - re->component.width / 2;
+		break;
+
+	case ALIGN_RIGHT:
+		currentX = *maxX - re->component.xPos - re->component.width;
+		break;
+	}
+
+	switch (re->component.vAlign)
+	{
+	case ALIGN_TOP:
+		currentY = *minY + re->component.yPos;
+		break;
+
+	case ALIGN_CENTER:
+		currentY = (*minY + *maxY) / 2 + re->component.yPos - re->component.height / 2;
+		break;
+
+	case ALIGN_BOTTOM:
+		currentY = *maxY - re->component.yPos - re->component.height;
+		break;
+	}
+
+	*minX = currentX;
+	*minY = currentY;
+	*maxX = currentX + re->component.width;
+	*maxY = currentY + re->component.height;
+}
+
 
 
 UIComponent ui_initComponent(const char* name)
@@ -174,6 +292,7 @@ UIComponent ui_initComponent(const char* name)
 	uic.onPress = NULL;
 	uic.onHold = NULL;
 	uic.onRelease = NULL;
+	uic.onHover = NULL;
 	uic.onScreenResize = NULL;
 
 	return uic;

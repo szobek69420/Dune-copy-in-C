@@ -14,7 +14,7 @@ struct UIComponent {
 	int xPos, yPos;
 	AlignUI hAlign, vAlign;
 
-	int isVisible, isInteractable;
+	int isVisible, isInteractable;//these cascade
 
 	seqtor_of(void*) children;
 	void* parent;
@@ -24,6 +24,7 @@ struct UIComponent {
 	void (*onPress)(void*);
 	void (*onHold)(void*);
 	void (*onRelease)(void*);
+	void (*onHover)(void*);
 	void (*onScreenResize)(void*, int, int);//width,height
 };
 
@@ -52,6 +53,10 @@ void ui_addElement(void* element, void* parent);
 void ui_removeAll();
 
 void ui_render();
+void ui_handleInput();
+
+//the parameters serve both as input (parent's bounds) and output values
+void ui_calculateBounds(void* element, int* minX, int* minY, int* maxX, int* maxY);
 
 
 UIComponent ui_initComponent(const char* name);

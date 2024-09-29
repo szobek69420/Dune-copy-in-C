@@ -158,6 +158,7 @@
     <ClCompile Include="Renderer\Texture\stb_image.c" />
     <ClCompile Include="Renderer\Texture\texture_handler.c" />
     <ClCompile Include="Renderer\Window\window.c" />
+    <ClCompile Include="UI\Button\button.c" />
     <ClCompile Include="UI\Canvas\canvas.c" />
     <ClCompile Include="UI\Image\image.c" />
     <ClCompile Include="UI\Text\text.c" />
@@ -183,6 +184,7 @@
     <ClInclude Include="Renderer\Shader\shader.h" />
     <ClInclude Include="Renderer\Texture\texture_handler.h" />
     <ClInclude Include="Renderer\Window\window.h" />
+    <ClInclude Include="UI\Button\button.h" />
     <ClInclude Include="UI\Canvas\canvas.h" />
     <ClInclude Include="UI\Image\image.h" />
     <ClInclude Include="UI\Text\text.h" />
