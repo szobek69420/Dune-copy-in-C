@@ -27,6 +27,7 @@
 #define TRAIL_VERTEX_COUNT 2*TRAIL_LENGTH
 #define TRAIL_VERTEX_FLOAT_COUNT 5
 
+
 struct Player {
 	Transform transform;
 	Renderable renderable;
@@ -42,48 +43,22 @@ struct Player {
 };
 typedef struct Player Player;
 
+static const float vertices[110];
+static const float vertices2[25];
+
 static int instanceCount = 0;
 static shader_id trailShader;
 
-
-const float vertices[] = {
-	0,0,0,0.5f,0.5f,
-	1.000f, 0.000f, 0.000f, 1.000f, 0.500f,
-	0.951f, -0.309f, 0.000f, 0.976f, 0.345f,
-	0.809f, -0.588f, 0.000f, 0.905f, 0.206f,
-	0.588f, -0.809f, 0.000f, 0.794f, 0.095f,
-	0.309f, -0.951f, 0.000f, 0.655f, 0.024f,
-	-0.000f, -1.000f, 0.000f, 0.500f, 0.000f,
-	-0.309f, -0.951f, 0.000f, 0.345f, 0.024f,
-	-0.588f, -0.809f, 0.000f, 0.206f, 0.095f,
-	-0.809f, -0.588f, 0.000f, 0.095f, 0.206f,
-	-0.951f, -0.309f, 0.000f, 0.024f, 0.345f,
-	-1.000f, 0.000f, 0.000f, 0.000f, 0.500f,
-	-0.951f, 0.309f, 0.000f, 0.024f, 0.655f,
-	-0.809f, 0.588f, 0.000f, 0.095f, 0.794f,
-	-0.588f, 0.809f, 0.000f, 0.206f, 0.905f,
-	-0.309f, 0.951f, 0.000f, 0.345f, 0.976f,
-	0.000f, 1.000f, 0.000f, 0.500f, 1.000f,
-	0.309f, 0.951f, 0.000f, 0.655f, 0.976f,
-	0.588f, 0.809f, 0.000f, 0.794f, 0.905f,
-	0.809f, 0.588f, 0.000f, 0.905f, 0.794f,
-	0.951f, 0.309f, 0.000f, 0.976f, 0.655f,
-	1.000f, 0.000f, 0.000f, 1.000f, 0.500f
-};
-
-const float vertices2[] = {
-	0,0,0,0.5f,0.5f,
-	1,-1,0,1,0,
-	-1,-1,0,0,0,
-	-1,1,0,0,1,
-	1,1,0,1,1
-};
 
 extern void* MAIN_CUM;
 static float aspectRatio = 1;
 static float currentCameraHeight = 30;
 
 static float DELTA_TIME = 0.0f;
+
+static const float SCORE_HEIGHT = 50.0f;
+static shader_id LINE_SHADER=0;
+static Renderable LINE;
 
 //prototypes
 void checkForScreenResize();
@@ -116,7 +91,17 @@ void* player_create()
 	free(temp);
 
 	if (instanceCount == 0)
+	{
 		trailShader = renderer_createShader("Assets/Shaders/default.vag", "Assets/Shaders/trail.fag", NULL);
+		LINE_SHADER = renderer_createShader("Assets/Shaders/Player/score_line.vag", "Assets/Shaders/Player/score_line.fag", NULL);
+		
+		const float lineVertices[] = { -1.0f,SCORE_HEIGHT,1.0f,SCORE_HEIGHT };
+		LINE=renderer_createRenderable(lineVertices, 4, NULL, 2, 0);
+		glBindVertexArray(LINE.vao);
+		glDisableVertexAttribArray(1);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, NULL);
+		glBindVertexArray(GL_ARRAY_BUFFER, 0);
+	}
 	instanceCount++;
 
 	return player;
@@ -131,8 +116,16 @@ void player_destroy(void* _player)//releases resources
 	free(player);
 	
 	instanceCount--;
-	if(instanceCount==0)
+	if (instanceCount == 0)
+	{
 		renderer_destroyShader(trailShader);
+		renderer_destroyShader(LINE_SHADER);
+
+		renderer_destroyRenderable(LINE);
+
+		trailShader = 0;
+		LINE_SHADER = 0;
+	}
 }
 
 
@@ -395,6 +388,12 @@ void player_render(void* _player)
 	Mat4 parentModel = gameObject_getTransformWorldModel(player->transform.parent);
 	Mat4 model = mat4_multiply(parentModel, gameObject_getTransformModel(&player->transform));
 
+	//line
+	renderer_useShader(LINE_SHADER);
+	renderer_setRenderMode(GL_LINES);
+	renderer_renderObject(LINE, parentModel);
+	renderer_setRenderMode(GL_POINTS);
+	renderer_renderObject(LINE, parentModel);
 
 	//trail
 	float trailLength = 0;
@@ -415,3 +414,37 @@ void player_render(void* _player)
 
 	renderer_renderObject(player->renderable, model);
 }
+
+
+const float vertices[] = {
+	0,0,0,0.5f,0.5f,
+	1.000f, 0.000f, 0.000f, 1.000f, 0.500f,
+	0.951f, -0.309f, 0.000f, 0.976f, 0.345f,
+	0.809f, -0.588f, 0.000f, 0.905f, 0.206f,
+	0.588f, -0.809f, 0.000f, 0.794f, 0.095f,
+	0.309f, -0.951f, 0.000f, 0.655f, 0.024f,
+	-0.000f, -1.000f, 0.000f, 0.500f, 0.000f,
+	-0.309f, -0.951f, 0.000f, 0.345f, 0.024f,
+	-0.588f, -0.809f, 0.000f, 0.206f, 0.095f,
+	-0.809f, -0.588f, 0.000f, 0.095f, 0.206f,
+	-0.951f, -0.309f, 0.000f, 0.024f, 0.345f,
+	-1.000f, 0.000f, 0.000f, 0.000f, 0.500f,
+	-0.951f, 0.309f, 0.000f, 0.024f, 0.655f,
+	-0.809f, 0.588f, 0.000f, 0.095f, 0.794f,
+	-0.588f, 0.809f, 0.000f, 0.206f, 0.905f,
+	-0.309f, 0.951f, 0.000f, 0.345f, 0.976f,
+	0.000f, 1.000f, 0.000f, 0.500f, 1.000f,
+	0.309f, 0.951f, 0.000f, 0.655f, 0.976f,
+	0.588f, 0.809f, 0.000f, 0.794f, 0.905f,
+	0.809f, 0.588f, 0.000f, 0.905f, 0.794f,
+	0.951f, 0.309f, 0.000f, 0.976f, 0.655f,
+	1.000f, 0.000f, 0.000f, 1.000f, 0.500f
+};
+
+const float vertices2[] = {
+	0,0,0,0.5f,0.5f,
+	1,-1,0,1,0,
+	-1,-1,0,0,0,
+	-1,1,0,0,1,
+	1,1,0,1,1
+};

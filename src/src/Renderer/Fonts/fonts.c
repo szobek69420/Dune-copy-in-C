@@ -14,6 +14,7 @@
 #include <seqtor.h>
 #include <glad/glad.h>
 
+
 struct Character {
 	char id;
 	float startX, startY;//top left uv coords
@@ -54,6 +55,8 @@ static int CURRENT_FONT_SIZE = 40;
 static int SCREEN_WIDTH = -1, SCREEN_HEIGHT = -1;
 static Mat4 SCREEN_MATRIX;
 
+seqtor_of(FontSet*) FONT_SETS_CREATED;
+
 void fonts_init()
 {
 	fonts_setScreenSize(1920, 1080);
@@ -75,6 +78,9 @@ void fonts_init()
 	glUniform4f(glGetUniformLocation(SHADER, "colour"), 1, 1, 1, 1);
 	glUniformMatrix4fv(glGetUniformLocation(SHADER, "projection"), 1, GL_FALSE, SCREEN_MATRIX.data);
 	glUseProgram(0);
+
+
+	seqtor_init(FONT_SETS_CREATED, 1);
 }
 
 void fonts_deinit()
@@ -82,6 +88,13 @@ void fonts_deinit()
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	shader_delete(SHADER);
+
+	while (seqtor_size(FONT_SETS_CREATED) > 0)
+	{
+		fonts_delete(seqtor_at(FONT_SETS_CREATED, 0));
+		seqtor_remove_at(FONT_SETS_CREATED, 0);
+	}
+	seqtor_destroy(FONT_SETS_CREATED);
 }
 
 FontSet* fonts_import(const char* fontImage, const char* fontMeta)
@@ -142,6 +155,8 @@ FontSet* fonts_import(const char* fontImage, const char* fontMeta)
 
 	qsort(fs->characters.data, fs->characters.size, sizeof(Character), compare);//hogy gyorsabb legyen benne a kereses
 	
+
+	seqtor_push_back(FONT_SETS_CREATED, fs);
 
 	printf("Font: %s loaded, %d characters\n", fs->name, seqtor_size(fs->characters));
 

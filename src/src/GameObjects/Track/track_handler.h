@@ -3,7 +3,7 @@
 
 #include "../../Glm2/mat4.h"
 
-#define TH_MAX_SEGMENT_COUNT 20
+#define TH_MAX_SEGMENT_COUNT 50
 #define TH_SEGMENT_LENGTH 10
 #define TH_SEGMENT_RESOLUTION 5
 

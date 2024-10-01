@@ -39,6 +39,9 @@ void renderer_init()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
+
+	glLineWidth(3);
+	glPointSize(15);
 }
 
 void renderer_deinit()

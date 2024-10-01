@@ -87,7 +87,7 @@ void physics_step(float deltaTime)
 	}
 	
 
-	ColliderSortHelper* helpers = malloc(sizeof(ColliderSortHelper) * LENGTH);
+	ColliderSortHelper* const helpers = malloc(sizeof(ColliderSortHelper) * LENGTH);
 	for (int i = 0; i < LENGTH; i++)
 		helpers[i].collider = seqtor_at(REGISTERED_COLLIDERS, i);
 

@@ -7,6 +7,8 @@
 #include "Player/player.h"
 #include "Track/track_handler.h"
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
 
 #define RAD2DEG 57.2957795f
 
@@ -173,20 +175,26 @@ void gameObject_removeAll()
 {
 	while (seqtor_size(root->transform.children) > 0)
 	{
-		gameObject_destroy(seqtor_at(root->transform.children, 0));
+		RootObject* child = seqtor_at(root->transform.children, 0);
 		seqtor_remove_at(root->transform.children, 0);
+		gameObject_destroy(child);
 	}
 }
 
 void gameObject_destroy(void* gameObject)
 {
 	RootObject* p = (RootObject*)gameObject;
+	printf("GameObject: destroying %s\n", p->transform.name);
 
 	gameObject_onDestroy(gameObject);//azert van ez a rekurziv hivas elott, mert azt akarom, hogy a szulo onDestroy-a elobb fusson le, mint a gyerekeie
 
 
-	for (int i = seqtor_size(p->transform.children)-1; i >=0; i--)//a gyerekek destroyat elobb akarom meghivni, mint a szuloet
-		gameObject_destroy(seqtor_at(p->transform.children, i));
+	while (seqtor_size(p->transform.children) > 0)//a gyerekek destroyat elobb akarom meghivni, mint a szuloet
+	{
+		RootObject* child = seqtor_at(p->transform.children, 0);
+		seqtor_remove_at(p->transform.children, 0);
+		gameObject_destroy(child);
+	}
 
 	switch (p->transform.type)
 	{

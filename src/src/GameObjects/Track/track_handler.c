@@ -48,7 +48,7 @@ void* trackHandler_create()
 {
 	TrackHandler* trackHandler = malloc(sizeof(TrackHandler));
 	seqtor_init(trackHandler->segments, 1);
-	trackHandler->currentSegmentStart = (Vec3){ 0,0,0 };
+	trackHandler->currentSegmentStart = (Vec3){ -50,0,0 };
 	trackHandler->player = NULL;
 
 	TEXTURE = renderer_createTexture("Assets/Sprites/track.png", 4);
@@ -84,7 +84,7 @@ void trackHandler_update(void* trackHandler, float deltaTime)
 		else if (gameObject_isAlive(th->player) == 0)
 			th->player = NULL;
 
-		if (th->player != NULL && th->currentSegmentStart.x - TH_MAX_SEGMENT_COUNT * TH_SEGMENT_LENGTH + 40 < ((TrackHandler*)th->player)->transform.position.x)
+		if (th->player != NULL && th->currentSegmentStart.x - TH_MAX_SEGMENT_COUNT * TH_SEGMENT_LENGTH + 80 < ((TrackHandler*)th->player)->transform.position.x)
 		{
 			destroySegment(seqtor_at(th->segments, 0));
 			seqtor_remove_at(th->segments, 0);

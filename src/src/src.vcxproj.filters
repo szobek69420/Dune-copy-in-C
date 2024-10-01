@@ -182,5 +182,7 @@
     <None Include="Assets\Shaders\Fonts\fonts.fag" />
     <None Include="Assets\Shaders\Image\image.vag" />
     <None Include="Assets\Shaders\Image\image.fag" />
+    <None Include="Assets\Shaders\Player\score_line.vag" />
+    <None Include="Assets\Shaders\Player\score_line.fag" />
   </ItemGroup>
 </Project>
