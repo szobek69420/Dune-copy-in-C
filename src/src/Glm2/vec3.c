@@ -49,6 +49,15 @@ Vec3 vec3_scale(Vec3 vec, float scalar)
     return (Vec3){ vec.x * scalar, vec.y * scalar, vec.z * scalar };
 }
 
+struct Vec3 vec3_lerp(struct Vec3 a, struct Vec3 b, float i)
+{
+    Vec3 result = a;
+    result.x += (b.x - a.x) * i;
+    result.y += (b.y - a.y) * i;
+    result.z += (b.z - a.z) * i;
+    return result;
+}
+
 struct Vec3 vec3_reflect(struct Vec3 vec, struct Vec3 normal)
 {
     normal = vec3_normalize(normal);

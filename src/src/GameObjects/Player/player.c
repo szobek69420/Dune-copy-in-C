@@ -23,7 +23,7 @@
 
 #define RAD2DEG 57.2957795f
 
-#define TRAIL_LENGTH 20
+#define TRAIL_LENGTH 30
 #define TRAIL_VERTEX_COUNT 2*TRAIL_LENGTH
 #define TRAIL_VERTEX_FLOAT_COUNT 5
 
@@ -333,13 +333,14 @@ void updateTrail(void* _player)
 	physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
 	physics_getColliderParam(player->collider, POSITION_VEC3, &position);
 
-	float minDistance = 0.02f * vec3_magnitude(velocity);
-	if (minDistance > vec3_magnitude(vec3_subtract(position, player->trailPoints[TRAIL_LENGTH - 1])))
-		return;
+	//refresh the last point and then interpolate the others independent from the frame rate (https://github.com/14islands/lerp )
+	float rate = DELTA_TIME * 60.0f;
+	rate = 1.0f - powf(1 - 0.6f, rate);
 
-	for (int i = 0; i < TRAIL_LENGTH - 1; i++)//push the points left one slot
-		player->trailPoints[i] = player->trailPoints[i + 1];
 	player->trailPoints[TRAIL_LENGTH - 1] = position;
+	for (int i = TRAIL_LENGTH-2; i >=0; i--)
+		player->trailPoints[i] = vec3_lerp(player->trailPoints[i], player->trailPoints[i + 1], rate);
+
 
 
 	float trailLength = 0;
