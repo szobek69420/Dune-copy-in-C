@@ -17,6 +17,7 @@ int gameObject_getNextId() { return currentId++; }
 
 typedef struct RootObject {
 	Transform transform;
+	GameObjectFunctions functions;
 } RootObject;
 
 RootObject* root;
@@ -26,9 +27,9 @@ seqtor_of(void*) REGISTERED_GAMEOBJECTS;//root is not part of it
 void gameObject_init()
 {
 	seqtor_init(REGISTERED_GAMEOBJECTS, 1);
-
 	root = (RootObject*)malloc(sizeof(RootObject));
-	root->transform = gameObject_createTransform(-1, "root");
+	root->transform = gameObject_createTransform("root");
+	memset(&root->functions, 0, sizeof(GameObjectFunctions));
 	root->transform.isInitialized = 69;
 }
 
@@ -48,31 +49,19 @@ void gameObject_update(float deltaTime)
 
 void gameObject_onStart(void* gameObject)
 {
-	switch (((RootObject*)gameObject)->transform.type)
-	{
-	case PLAYER:
-		player_onStart(gameObject);
-		break;
+	RootObject* go = gameObject;
 
-	case TRACK_HANDLER:
-		trackHandler_onStart(gameObject);
-		break;
-	}
+	if (go->functions.onStart != NULL)
+		go->functions.onStart(go);
 
-	((RootObject*)gameObject)->transform.isInitialized = 69;
+	go->transform.isInitialized = 69;
 }
 void gameObject_onDestroy(void* gameObject)
 {
-	switch (((RootObject*)gameObject)->transform.type)
-	{
-	case PLAYER:
-		player_onDestroy(gameObject);
-		break;
+	RootObject* go = gameObject;
 
-	case TRACK_HANDLER:
-		trackHandler_onDestroy(gameObject);
-		break;
-	}
+	if (go->functions.onDestroy != NULL)
+		go->functions.onDestroy(go);
 }
 
 void _updateHelper(void* gameObject, float deltaTime)
@@ -84,16 +73,8 @@ void _updateHelper(void* gameObject, float deltaTime)
 		return;
 	}
 
-	switch (p->transform.type)
-	{
-	case PLAYER:
-		player_update(gameObject, deltaTime);
-		break;
-
-	case TRACK_HANDLER:
-		trackHandler_update(gameObject, deltaTime);
-		break;
-	}
+	if (p->functions.onUpdate != NULL)
+		p->functions.onUpdate(p,deltaTime);
 
 	for (int i = 0; i < seqtor_size(p->transform.children); i++)
 		_updateHelper(seqtor_at(p->transform.children, i), deltaTime);
@@ -110,16 +91,8 @@ void _renderHelper(void* gameObject)
 {
 	RootObject* p = (RootObject*)gameObject;
 
-	switch (p->transform.type)
-	{
-	case PLAYER:
-		player_render(gameObject);
-		break;
-
-	case TRACK_HANDLER:
-		trackHandler_render(gameObject);
-		break;
-	}
+	if (p->functions.render != NULL)
+		p->functions.render(p);
 
 	for (int i = 0; i < seqtor_size(p->transform.children); i++)
 		_renderHelper(seqtor_at(p->transform.children, i));
@@ -132,13 +105,11 @@ void* gameObject_create(GameObjects type,const char* name)
 	switch (type)
 	{
 	case PLAYER:
-		gameObject=player_create();
-		gameObject->transform=gameObject_createTransform(type, name);
+		gameObject=player_create(name);
 		break;
 
 	case TRACK_HANDLER:
-		gameObject = trackHandler_create();
-		gameObject->transform = gameObject_createTransform(type, name);
+		gameObject = trackHandler_create(name);
 		break;
 	}
 
@@ -196,22 +167,12 @@ void gameObject_destroy(void* gameObject)
 		gameObject_destroy(child);
 	}
 
-	switch (p->transform.type)
+	if (p->functions.destroy != NULL)
+		p->functions.destroy(p);
+	else
 	{
-	case PLAYER:
-		gameObject_destroyTransform(&(p->transform));
-		player_destroy(gameObject);
-		break;
-
-	case TRACK_HANDLER:
-		gameObject_destroyTransform(&(p->transform));
-		trackHandler_destroy(gameObject);
-		break;
-
-	default:
 		gameObject_destroyTransform(&(p->transform));
 		free(p);
-		break;
 	}
 
 
@@ -313,12 +274,7 @@ void gameObject_setParent(void* gameObject, void* parent)
 	((RootObject*)gameObject)->transform.parent = &((RootObject*)parent)->transform;
 }
 
-int gameObject_getType(void* gameObject)
-{
-	return ((RootObject*)gameObject)->transform.type;
-}
-
-Transform gameObject_createTransform(GameObjects type, const char* name)
+Transform gameObject_createTransform(const char* name)
 {
 	Transform transform;
 	transform.position = (Vec3){ 0,0,0 };
@@ -327,7 +283,6 @@ Transform gameObject_createTransform(GameObjects type, const char* name)
 	seqtor_init(transform.children, 1);
 	transform.isInitialized = 0;
 	transform.id = gameObject_getNextId();
-	transform.type = type;
 
 	transform.parent = NULL;
 

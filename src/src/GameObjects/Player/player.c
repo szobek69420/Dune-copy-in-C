@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 
 #include "../game_object.h"
@@ -30,6 +31,8 @@
 
 struct Player {
 	Transform transform;
+	GameObjectFunctions functions;
+
 	Renderable renderable;
 	Collider* collider;
 
@@ -68,9 +71,25 @@ void applyGravityAndDrag(Player* player);
 void rotatePlayer(Player* player);
 void updateTrail(void* _player);
 
-void* player_create()
+void player_destroy(void* player);
+void player_update(void* player, float deltaTime);
+void player_onStart(void* player);
+void player_onDestroy(void* player);
+void player_render(void* player);
+
+void* player_create(const char* name)
 {
 	Player* player = (Player*)malloc(sizeof(Player));
+
+	player->transform = gameObject_createTransform(name);
+
+	memset(&player->functions, 0, sizeof(GameObjectFunctions));
+	player->functions.destroy = player_destroy;
+	player->functions.render = player_render;
+	player->functions.onStart = player_onStart;
+	player->functions.onUpdate = player_update;
+	player->functions.onDestroy = player_onDestroy;
+
 
 	player->renderable = renderer_createRenderable(vertices, 110, NULL, 22,0);
 	player->renderable.texture = renderer_createTexture("Assets/Sprites/player.png", 4);
@@ -110,6 +129,9 @@ void* player_create()
 void player_destroy(void* _player)//releases resources
 {
 	Player* player = _player;
+
+	gameObject_destroyTransform(&player->transform);
+
 	renderer_destroyRenderable(player->renderable);
 	physics_destroyCollider(player->collider);
 	renderer_destroyRenderable(player->trail);

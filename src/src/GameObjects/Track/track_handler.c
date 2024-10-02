@@ -21,6 +21,7 @@ typedef struct TrackSegment TrackSegment;
 struct TrackHandler 
 {
 	Transform transform;
+	GameObjectFunctions functions;
 
 	seqtor_of(TrackSegment*) segments;
 	Vec3 currentSegmentStart;
@@ -44,9 +45,27 @@ void destroySegment(TrackSegment* segment);
 void renderSegment(TrackSegment* segment, Mat4 parentModel);
 
 
-void* trackHandler_create()
+void trackHandler_destroy(void* trackHandler);
+void trackHandler_update(void* trackHandler, float deltaTime);
+void trackHandler_onStart(void* trackHandler);
+void trackHandler_onDestroy(void* trackHandler);
+void trackHandler_render(void* trackHandler);
+
+
+
+void* trackHandler_create(const char* name)
 {
 	TrackHandler* trackHandler = malloc(sizeof(TrackHandler));
+
+	trackHandler->transform = gameObject_createTransform(name);
+	
+	memset(&trackHandler->functions, 0, sizeof(GameObjectFunctions));
+	trackHandler->functions.destroy = trackHandler_destroy;
+	trackHandler->functions.render = trackHandler_render;
+	trackHandler->functions.onStart = trackHandler_onStart;
+	trackHandler->functions.onUpdate = trackHandler_update;
+	trackHandler->functions.onDestroy = trackHandler_onDestroy;
+
 	seqtor_init(trackHandler->segments, 1);
 	trackHandler->currentSegmentStart = (Vec3){ -50,0,0 };
 	trackHandler->player = NULL;
@@ -59,6 +78,8 @@ void* trackHandler_create()
 void trackHandler_destroy(void* trackHandler)
 {
 	TrackHandler* th = trackHandler;
+
+	gameObject_destroyTransform(&th->transform);
 
 	seqtor_destroy(th->segments);
 

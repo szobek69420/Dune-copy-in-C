@@ -8,14 +8,14 @@
 #include "../Glm2/quaternion.h"
 #include "../Glm2/mat4.h"
 
-/*every gameobject's first field is a Transform called "transform"
+/*every gameobject's first field is a Transform
+* the second field is a GameObjectFunctions
 * and the struct definition should be in the .c file
 * */
 
 struct Transform {
 	char* name;
 	uint32_t id;
-	uint32_t type;
 	seqtor_of(void*) children;
 	struct Vec3 position;
 	struct Quaternion rotation;
@@ -23,6 +23,15 @@ struct Transform {
 	const struct Transform* parent;
 };
 typedef struct Transform Transform;
+
+struct GameObjectFunctions {
+	void (*onStart)(void*);
+	void (*onUpdate)(void*, float);//go, dt
+	void (*onDestroy)(void*);
+	void (*destroy)(void*);
+	void (*render)(void*);
+};
+typedef struct GameObjectFunctions GameObjectFunctions;
 
 enum GameObjects{
 	TRACK_HANDLER,
@@ -53,9 +62,7 @@ int gameObject_isAlive(void* gameObject);
 void* gameObject_getParent(void* gameObject);//it cannot return the root component
 void gameObject_setParent(void* gameObject, void* parent);
 
-int gameObject_getType(void* gameObject);
-
-Transform gameObject_createTransform(GameObjects type, const char* name);
+Transform gameObject_createTransform(const char* name);
 void gameObject_destroyTransform(Transform* transform);
 Mat4 gameObject_getTransformModel(const Transform* transform);
 Mat4 gameObject_getTransformModelInverse(const Transform* transform);
