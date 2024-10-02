@@ -6,6 +6,7 @@
 #include "game_object.h"
 #include "Player/player.h"
 #include "Track/track_handler.h"
+#include "Background/background.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
@@ -110,6 +111,10 @@ void* gameObject_create(GameObjects type,const char* name)
 
 	case TRACK_HANDLER:
 		gameObject = trackHandler_create(name);
+		break;
+
+	case BACKGROUND:
+		gameObject = background_create(name);
 		break;
 	}
 

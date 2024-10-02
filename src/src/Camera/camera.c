@@ -101,3 +101,8 @@ void camera_setPosition(struct Camera* cum, struct Vec3 position)
     cum->position = position;
     cum->view_matrix = mat4_lookAt(cum->position, cum->front, cum->up);
 }
+
+struct Vec3 camera_getPosition(struct Camera* cum)
+{
+    return cum->position;
+}

@@ -165,6 +165,10 @@ void gameLoop_handleStageChange()
             gameObject_removeAll();
             ui_removeAll();
 
+            void* background = NULL;
+            background = gameObject_create(BACKGROUND, "background");
+            gameObject_add(background, NULL);
+
             void* player = NULL;
             player = gameObject_create(PLAYER, "player");
             gameObject_add(player, NULL);

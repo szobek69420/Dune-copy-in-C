@@ -16,4 +16,6 @@ void camera_setPosition(struct Camera* cum, struct Vec3 position);
 struct Mat4 camera_getViewMatrix(struct Camera* cum);
 struct Mat4 camera_getProjectionMatrix(struct Camera* cum);
 
+struct Vec3 camera_getPosition(struct Camera* cum);
+
 #endif

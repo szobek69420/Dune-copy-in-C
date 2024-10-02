@@ -96,6 +96,9 @@
     <ClCompile Include="GameManager\game_manager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GameObjects\Background\background.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -173,6 +176,9 @@
     <ClInclude Include="GameManager\game_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GameObjects\Background\background.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\default.fag" />
@@ -184,5 +190,7 @@
     <None Include="Assets\Shaders\Image\image.fag" />
     <None Include="Assets\Shaders\Player\score_line.vag" />
     <None Include="Assets\Shaders\Player\score_line.fag" />
+    <None Include="Assets\Shaders\Background\background.vag" />
+    <None Include="Assets\Shaders\Background\background.fag" />
   </ItemGroup>
 </Project>

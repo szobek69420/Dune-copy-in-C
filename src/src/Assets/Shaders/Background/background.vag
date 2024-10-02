@@ -1,0 +1,17 @@
+#version 330 core
+layout (location=0) in vec3 aPos;
+layout (location=1) in vec2 aUV;
+
+out vec2 uv;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+uniform vec2 uv_info;//x: x offset, y: x scale
+
+void main()
+{
+	uv=vec2(uv_info.x+uv_info.y*aUV.x,aUV.y);
+	gl_Position=projection*view*vec4(aPos.xyz,1);
+	gl_Position=vec4(aPos.xy,gl_Position.z/gl_Position.w,1);//azert vannak benne a matrix szorzasok, hogy a z erteke a tobbi game objecttel osszhangban legyen
+}

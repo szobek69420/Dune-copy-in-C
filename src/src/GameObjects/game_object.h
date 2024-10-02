@@ -35,7 +35,8 @@ typedef struct GameObjectFunctions GameObjectFunctions;
 
 enum GameObjects{
 	TRACK_HANDLER,
-	PLAYER
+	PLAYER,
+	BACKGROUND
 };
 typedef enum GameObjects GameObjects;
 
