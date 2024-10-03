@@ -7,5 +7,4 @@ If for some reason you want to open the source project, the VS solution is confi
 
 Currently it looks like nothing less than a demonstration of the capabilities of modern graphics hardware.
 
-![image](https://github.com/user-attachments/assets/cfe0005a-1407-46e3-ab6a-5d79a9d6cf82)
-
+![image](https://github.com/user-attachments/assets/efc40a6e-6eb2-438d-838c-3ff3f8950303)
