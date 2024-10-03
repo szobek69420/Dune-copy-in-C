@@ -17,5 +17,7 @@ struct Mat4 camera_getViewMatrix(struct Camera* cum);
 struct Mat4 camera_getProjectionMatrix(struct Camera* cum);
 
 struct Vec3 camera_getPosition(struct Camera* cum);
+float camera_getWidth(struct Camera* cum);
+float camera_getHeight(struct Camera* cum);
 
 #endif

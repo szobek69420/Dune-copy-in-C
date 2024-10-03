@@ -197,6 +197,7 @@
   <ItemGroup>
     <None Include="Assets\Shaders\Background\background.fag" />
     <None Include="Assets\Shaders\Background\background.vag" />
+    <None Include="Assets\Shaders\Background\sun.fag" />
     <None Include="Assets\Shaders\Fonts\fonts.fag" />
     <None Include="Assets\Shaders\Fonts\fonts.vag" />
     <None Include="Assets\Shaders\Image\image.fag" />

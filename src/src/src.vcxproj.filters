@@ -192,5 +192,6 @@
     <None Include="Assets\Shaders\Player\score_line.fag" />
     <None Include="Assets\Shaders\Background\background.vag" />
     <None Include="Assets\Shaders\Background\background.fag" />
+    <None Include="Assets\Shaders\Background\sun.fag" />
   </ItemGroup>
 </Project>

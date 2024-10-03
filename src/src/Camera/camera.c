@@ -106,3 +106,13 @@ struct Vec3 camera_getPosition(struct Camera* cum)
 {
     return cum->position;
 }
+
+float camera_getWidth(struct Camera* cum)
+{
+    return cum->width;
+}
+
+float camera_getHeight(struct Camera* cum)
+{
+    return cum->height;
+}
