@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "audio.h"
 
 #include <stdio.h>
@@ -7,7 +9,7 @@
 
 //---------------------------------------
 
-struct sound {
+struct Sound {
 	ma_sound* data;
 	sound_id_t id;
 };
@@ -16,24 +18,23 @@ struct sound {
 static sound_id_t currentId = 1;
 
 static ma_engine* engine = NULL;
-static int currentEngineState = AUDIO_NONE;
 
 //sound initializers
 struct SoundInfo {
-	ma_sound* sound;
-	char* pathToSound;
+	ma_sound* data;
+	char* path;
 };
 typedef struct SoundInfo SoundInfo;
 
 static seqtor_of(SoundInfo) LOADED_SOUNDS;
 
 //active sounds
-static sound activeSounds[AUDIO_MAX_COUNT_OF_SIMULTANEOUS_SOUNDS];
+static Sound activeSounds[AUDIO_MAX_COUNT_OF_SIMULTANEOUS_SOUNDS];
 
-void audio_unloadSounds(int);
+void audio_unloadSounds();
 
 //returns 0 if problemlos
-int audio_init(int engineState)
+int audio_init()
 {
 	if (engine != NULL)
 		return;
@@ -52,8 +53,6 @@ int audio_init(int engineState)
 		return -1;
 	}
 
-	currentEngineState = engineState;
-
 	for (unsigned int i = 0; i < AUDIO_MAX_COUNT_OF_SIMULTANEOUS_SOUNDS; i++)
 	{
 		activeSounds[i].data = NULL;
@@ -63,7 +62,7 @@ int audio_init(int engineState)
 	return 0;
 }
 
-void audio_destroy()
+void audio_deinit()
 {
 	if (engine == NULL)
 		return;
@@ -78,11 +77,10 @@ void audio_destroy()
 		activeSounds[i].id = 0;//0 means unused
 	}
 
-	audio_unloadSounds(currentEngineState);
+	audio_unloadSounds();
 	ma_engine_uninit(engine);
 	free(engine);
 	engine = NULL;
-	currentEngineState = 0;
 
 	seqtor_destroy(LOADED_SOUNDS);
 }
@@ -110,7 +108,9 @@ sound_id_t audio_playSound(const char* pathToFile)
 		return 0;
 	}
 
-	sound s;
+	audio_preloadSound(pathToFile);//if it is loaded already, then nichts passiert
+
+	Sound s;
 	s.data = malloc(sizeof(ma_sound));
 
 	ma_result result = MA_SUCCESS;
@@ -157,30 +157,6 @@ sound_id_t audio_playSound(const char* pathToFile)
 	//add sound to the activeSounds
 	s.id = currentId++;
 	activeSounds[index] = s;
-
-	//add to the registry, if it has not been loaded yet
-	int index = -1;
-	for (int i = 0; i < seqtor_size(LOADED_SOUNDS); i++)
-	{
-		if (strcmp(pathToFile, seqtor_at(LOADED_SOUNDS, i).pathToSound) == 0)
-		{
-			index = i;
-			break;
-		}
-	}
-
-	if (index == -1)
-	{
-		ma_sound* globus = malloc(sizeof(ma_sound));
-		memcpy(globus, s.data, sizeof(ma_sound));
-		
-		SoundInfo si;
-		si.pathToSound = malloc((strlen(pathToFile) + 1) * sizeof(char));
-		strcpy(si.pathToSound, pathToFile);
-		si.sound = globus;
-
-		seqtor_push_back(LOADED_SOUNDS, si);
-	}
 
 	return s.id;
 }
@@ -234,7 +210,46 @@ void audio_stopSound(sound_id_t soundId)
 	}
 }
 
-void audio_unloadSounds(int currentState)
+void audio_preloadSound(const char* pathToFile)
+{
+	for (int i = 0; i < seqtor_size(LOADED_SOUNDS); i++)
+	{
+		if (strcmp(seqtor_at(LOADED_SOUNDS, i).path, pathToFile) == 0)
+			return;
+	}
+
+	SoundInfo si;
+	si.path = malloc((strlen(pathToFile) + 1) * sizeof(char));
+	if (si.path == NULL)
+	{
+		printf("Audio: File could not be loaded\n");
+		return;
+	}
+	strcpy(si.path, pathToFile);
+
+	si.data = malloc(sizeof(ma_sound));
+	if (si.data == NULL)
+	{
+		printf("Audio: File could not be loaded\n");
+		free(si.path);
+		return;
+	}
+
+	ma_result result = MA_SUCCESS;
+	result = ma_sound_init_from_file(engine, pathToFile, 0, NULL, NULL, si.data);
+
+	if (result != MA_SUCCESS)
+	{
+		printf("Audio: File could not be loaded\n");
+		free(si.path);
+		free(si.data);
+		return;
+	}
+
+	seqtor_push_back(LOADED_SOUNDS, si);
+}
+
+void audio_unloadSounds()
 {
 	if (engine == NULL)
 		return;
@@ -242,9 +257,9 @@ void audio_unloadSounds(int currentState)
 
 	for (int i = 0; i < seqtor_size(LOADED_SOUNDS); i++)
 	{
-		ma_sound_uninit(seqtor_at(LOADED_SOUNDS, i).sound);
-		free(seqtor_at(LOADED_SOUNDS, i).pathToSound);
-		free(seqtor_at(LOADED_SOUNDS, i).sound);
+		ma_sound_uninit(seqtor_at(LOADED_SOUNDS, i).data);
+		free(seqtor_at(LOADED_SOUNDS, i).path);
+		free(seqtor_at(LOADED_SOUNDS, i).data);
 	}
 
 	seqtor_clear(LOADED_SOUNDS);

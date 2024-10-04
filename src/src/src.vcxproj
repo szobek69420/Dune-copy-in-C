@@ -129,15 +129,18 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Audio\audio.c" />
+    <ClCompile Include="Audio\miniaudio.c" />
     <ClCompile Include="Camera\camera.c" />
     <ClCompile Include="GameLoop\game_loop.c" />
     <ClCompile Include="GameManager\game_manager.c" />
@@ -168,6 +171,7 @@
     <ClCompile Include="UI\ui.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio\audio.h" />
     <ClInclude Include="Camera\camera.h" />
     <ClInclude Include="GameLoop\game_loop.h" />
     <ClInclude Include="GameManager\game_manager.h" />

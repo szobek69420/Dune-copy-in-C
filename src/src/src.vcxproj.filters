@@ -99,6 +99,12 @@
     <ClCompile Include="GameObjects\Background\background.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Audio\miniaudio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio\audio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameObjects\game_object.h">
@@ -177,6 +183,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameObjects\Background\background.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -17,6 +17,8 @@
 #include "../Input/event_queue.h"
 #include "../Input/input.h"
 
+#include "../Audio/audio.h"
+
 #include "../UI/ui.h"
 #include "../UI/Text/text.h"
 #include "../UI/Button/button.h"
@@ -119,6 +121,12 @@ void gameLoop_handleStageChange()
             MAIN_CUM = camera_create((Vec3) { 0, 0, 5 }, (Vec3) { 0, 1, 0 });
             camera_setProjection(MAIN_CUM, 10, 10, 0, 10);
             camera_setForward(MAIN_CUM, (Vec3) { 0, 0, -1 });
+
+            input_init();
+            eventQueue_init();
+
+            audio_init();
+
             renderer_init();
             physics_init();
 
@@ -126,9 +134,6 @@ void gameLoop_handleStageChange()
 
             renderer_setCamera(MAIN_CUM);
             gameObject_init();
-
-            input_init();
-            eventQueue_init();
 
             //glEnable(GL_MULTISAMPLE);
             glEnable(GL_DEPTH_TEST);
@@ -151,6 +156,8 @@ void gameLoop_handleStageChange()
             physics_deinit();
             renderer_deinit();
             camera_destroy(MAIN_CUM);
+
+            audio_deinit();
 
             glfwDestroyWindow(CURRENT_WINDOW);
             glfwTerminate();

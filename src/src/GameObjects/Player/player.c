@@ -22,6 +22,8 @@
 #include "../../UI/ui.h"
 #include "../../UI/Text/text.h"
 
+#include "../../Audio/audio.h"
+
 #define RAD2DEG 57.2957795f
 
 #define TRAIL_LENGTH 30
@@ -42,7 +44,11 @@ struct Player {
 	Renderable trail;
 	Vec3 trailPoints[TRAIL_LENGTH];
 
+	Vec3 previousVelocity;
+
 	void* playerInfoText;
+
+	sound_id_t music;
 };
 typedef struct Player Player;
 
@@ -70,6 +76,8 @@ void handleInput(Player* player);
 void applyGravityAndDrag(Player* player);
 void rotatePlayer(Player* player);
 void updateTrail(void* _player);
+void detectCollision(Player* player);
+
 
 void player_destroy(void* player);
 void player_update(void* player, float deltaTime);
@@ -101,7 +109,11 @@ void* player_create(const char* name)
 	player->touchingGrass = 0;
 	player->angularVelocity = 0;
 
+	player->previousVelocity = (Vec3){ 0,0,0 };
+
 	player->playerInfoText = NULL;
+
+	player->music = 0;
 
 	memset(player->trailPoints, 0, sizeof(player->trailPoints));
 	void* temp = malloc(sizeof(float) * TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
@@ -158,6 +170,10 @@ void player_update(void* _player, float deltaTime)
 	Player* player = (Player*)_player;
 	physics_getColliderParam(player->collider, POSITION_VEC3, &player->transform.position);//update renderable position
 
+
+	detectCollision(player);//must be before grass touching check
+
+
 	//check for grass touching
 	int colliderCount;
 	CollisionInfo* ci = physics_getColliderCollisions(player->collider, &colliderCount);
@@ -185,6 +201,9 @@ void player_update(void* _player, float deltaTime)
 	checkForScreenResize();
 	updateCameraProperties(player);
 
+	if (player->music == 0 || audio_soundAtEnd(player->music) != 0)
+		player->music = audio_playSound("Assets/Audio/hard.flac");
+
 
 	//update playerinfo
 	if (player->playerInfoText != NULL)
@@ -194,6 +213,8 @@ void player_update(void* _player, float deltaTime)
 		text_setText(player->playerInfoText, buffer);
 	}
 
+
+	physics_getColliderParam(player->collider, VELOCITY_VEC3, &player->previousVelocity);
 
 	//yeet game
 	if (input_isKeyPressed(GLFW_KEY_C))
@@ -225,9 +246,12 @@ void player_onStart(void* _player)
 	player->playerInfoText = ui_getElementByName("playerInfo");
 }
 
-void player_onDestroy(void* player)//do something ingame (the destroy() releases the resources)
+void player_onDestroy(void* _player)//do something ingame (the destroy() releases the resources)
 {
+	Player* player = _player;
 
+	if (player->music != 0 && audio_soundAtEnd(player->music) == 0)
+		audio_stopSound(player->music);
 }
 
 void checkForScreenResize()
@@ -399,6 +423,27 @@ void updateTrail(void* _player)
 	renderer_updateGeometry(&player->trail, vData, TRAIL_VERTEX_FLOAT_COUNT * TRAIL_VERTEX_COUNT);
 
 	free(vData);
+}
+
+void detectCollision(Player* player)
+{
+	int collisionCount;
+	void* alma = physics_getColliderCollisions(player->collider, &collisionCount);
+
+	if (collisionCount != 0)
+		free(alma);
+
+	if (collisionCount != 0 && player->touchingGrass == 0)
+	{
+		Vec3 velocity;
+		physics_getColliderParam(player->collider, VELOCITY_VEC3, &velocity);
+
+		if (vec3_magnitude(velocity)>10&&vec3_magnitude(velocity) < 0.7f * vec3_magnitude(player->previousVelocity))
+		{
+			audio_playSound("Assets/Audio/impact.flac");
+			//printf("impact: %.2f, %.2f, %.2f degs\n", vec3_magnitude(velocity), vec3_magnitude(player->previousVelocity), RAD2DEG*acosf(vec3_dot(vec3_normalize(velocity), vec3_normalize(player->previousVelocity))));
+		}
+	}
 }
 
 
